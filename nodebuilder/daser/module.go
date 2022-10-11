@@ -11,7 +11,25 @@ import (
 	"github.com/celestiaorg/celestia-node/nodebuilder/node"
 )
 
-func ConstructModule(tp node.Type) fx.Option {
+func ConstructModule(tp node.Type, cfg *Config) fx.Option {
+
+	cfgErr := cfg.Validate()
+
+	baseComponents := fx.Options(
+		fx.Supply(*cfg),
+		fx.Error(cfgErr),
+		fx.Provide(
+			func(c Config) []das.Option {
+				return []das.Option{
+					das.WithParamSamplingRange(int(c.SamplingRange)),
+					das.WithParamConcurrencyLimit(int(c.ConcurrencyLimit)),
+					das.WithParamPriorityQueueSize(int(c.PriorityQueueSize)),
+					das.WithParamBackgroundStoreInterval(c.BackgroundStoreInterval),
+				}
+			},
+		),
+	)
+
 	switch tp {
 	case node.Light, node.Full:
 		return fx.Module(
