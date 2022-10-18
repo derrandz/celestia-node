@@ -26,17 +26,27 @@ type dasingParams struct {
 	genesisHeight     uint
 }
 
-type Option func(*DASer)
-
-func WithParamSamplingRange(samplingRange int) Option {
-	return func(d *DASer) {
-		d.params.samplingRange = uint(samplingRange)
+func defaultDasingParams() dasingParams {
+	return dasingParams{
+		samplingRange:     100,
+		concurrencyLimit:  16,
+		bgStoreInterval:   10 * time.Minute,
+		priorityQueueSize: 16 * 4,
+		genesisHeight:     1,
 	}
 }
 
-func WithParamConcurrencyLimit(concurrencyLimit int) Option {
+type Option func(*DASer)
+
+func WithParamSamplingRange(samplingRange uint) Option {
 	return func(d *DASer) {
-		d.params.concurrencyLimit = uint(concurrencyLimit)
+		d.params.samplingRange = samplingRange
+	}
+}
+
+func WithParamConcurrencyLimit(concurrencyLimit uint) Option {
+	return func(d *DASer) {
+		d.params.concurrencyLimit = concurrencyLimit
 	}
 }
 
@@ -46,9 +56,9 @@ func WithParamBackgroundStoreInterval(bgStoreInterval time.Duration) Option {
 	}
 }
 
-func WithParamPriorityQueueSize(priorityQueueSize int) Option {
+func WithParamPriorityQueueSize(priorityQueueSize uint) Option {
 	return func(d *DASer) {
-		d.params.priorityQueueSize = uint(priorityQueueSize)
+		d.params.priorityQueueSize = priorityQueueSize
 	}
 }
 
@@ -89,7 +99,7 @@ func NewDASer(
 	options ...Option,
 ) *DASer {
 	d := &DASer{
-		params:         dasingParams{},
+		params:         defaultDasingParams(),
 		da:             da,
 		bcast:          bcast,
 		hsub:           hsub,
@@ -101,10 +111,6 @@ func NewDASer(
 
 	for _, applyOpt := range options {
 		applyOpt(d)
-	}
-
-	if len(options) == 0 {
-		log.Warn("das/daser: no options applied, daser parameters will be instantiated with zero-values, make sure to configure the daser")
 	}
 
 	d.sampler = newSamplingCoordinator(d.params, getter, d.sample)

@@ -21,10 +21,11 @@ func ConstructModule(tp node.Type, cfg *Config) fx.Option {
 		fx.Provide(
 			func(c Config) []das.Option {
 				return []das.Option{
-					das.WithParamSamplingRange(int(c.SamplingRange)),
-					das.WithParamConcurrencyLimit(int(c.ConcurrencyLimit)),
-					das.WithParamPriorityQueueSize(int(c.PriorityQueueSize)),
+					das.WithParamSamplingRange(c.SamplingRange),
+					das.WithParamConcurrencyLimit(c.ConcurrencyLimit),
+					das.WithParamPriorityQueueSize(c.PriorityQueueSize),
 					das.WithParamBackgroundStoreInterval(c.BackgroundStoreInterval),
+					das.WithParamGenesisHeight(c.GenesisHeight),
 				}
 			},
 		),
@@ -34,6 +35,7 @@ func ConstructModule(tp node.Type, cfg *Config) fx.Option {
 	case node.Light, node.Full:
 		return fx.Module(
 			"daser",
+			baseComponents,
 			fx.Provide(fx.Annotate(
 				NewDASer,
 				fx.OnStart(func(startCtx, ctx context.Context, fservice fraudServ.Module, das *das.DASer) error {

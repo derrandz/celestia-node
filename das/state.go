@@ -6,10 +6,10 @@ import (
 
 // coordinatorState represents the current state of sampling
 type coordinatorState struct {
-	genesisHeight uint
-	samplingRange uint // is the maximum amount of headers processed in one job.
+	genesisHeight uint64
+	samplingRange uint64 // is the maximum amount of headers processed in one job.
 
-	priorityQueueSize uint                       // the size of the priority queue
+	priorityQueueSize int                        // the size of the priority queue
 	priority          []job                      // list of headers heights that will be sampled with higher priority
 	inProgress        map[int]func() workerState // keeps track of running workers
 	failed            map[uint64]int             // stores heights of failed headers with amount of attempt as value
@@ -25,9 +25,9 @@ type coordinatorState struct {
 // newCoordinatorState initiates state for samplingCoordinator
 func newCoordinatorState(params dasingParams) coordinatorState {
 	return coordinatorState{
-		genesisHeight:     params.genesisHeight,
-		samplingRange:     params.samplingRange,
-		priorityQueueSize: params.priorityQueueSize,
+		genesisHeight:     uint64(params.genesisHeight),
+		samplingRange:     uint64(params.samplingRange),
+		priorityQueueSize: int(params.priorityQueueSize),
 		priority:          make([]job, 0),
 		inProgress:        make(map[int]func() workerState),
 		failed:            make(map[uint64]int),
@@ -81,7 +81,8 @@ func (s *coordinatorState) updateHead(last uint64) bool {
 		return false
 	}
 
-	if s.networkHead == uint64(s.genesisHeight) {
+	// TODO(@derrandz): question to @walldiss, why is networkHead uint64 to begin with?
+	if s.networkHead == s.genesisHeight {
 		s.networkHead = last
 		log.Infow("found first header, starting sampling")
 		return true
@@ -89,9 +90,9 @@ func (s *coordinatorState) updateHead(last uint64) bool {
 
 	// add most recent headers into priority queue
 	from := s.networkHead + 1
-	for from <= last && len(s.priority) < int(s.priorityQueueSize) {
+	for from <= last && len(s.priority) < s.priorityQueueSize {
 		s.priority = append(s.priority, s.newJob(from, last))
-		from += uint64(s.samplingRange)
+		from += s.samplingRange
 	}
 
 	log.Debugw("added recent headers to DASer priority queue", "from_height", s.networkHead, "to_height", last)
@@ -114,7 +115,8 @@ func (s *coordinatorState) nextJob() (next job, found bool) {
 
 	j := s.newJob(s.next, s.networkHead)
 
-	s.next += uint64(s.samplingRange)
+	// TODO(@derrandz): same here @walldiss why is next a uint64?
+	s.next += s.samplingRange
 	if s.next > s.networkHead {
 		s.next = s.networkHead + 1
 	}
@@ -143,7 +145,7 @@ func (s *coordinatorState) putInProgress(jobID int, getState func() workerState)
 
 func (s *coordinatorState) newJob(from, max uint64) job {
 	s.nextJobID++
-	to := from + uint64(s.samplingRange) - 1
+	to := from + s.samplingRange - 1
 	if to > max {
 		to = max
 	}

@@ -11,7 +11,7 @@ var (
 
 type Config struct {
 	//  samplingRange is the maximum amount of headers processed in one job.
-	SamplingRange uint64 // TODO(@derrandz): Question to @vlad, why is this uint64?
+	SamplingRange uint
 
 	// concurrencyLimit defines the maximum amount of sampling workers running in parallel.
 	ConcurrencyLimit uint
@@ -39,8 +39,6 @@ func DefaultConfig() Config {
 
 // Validate performs basic validation of the config.
 func (cfg *Config) Validate() error {
-	if cfg.BackgroundStoreInterval <= 0 {
-		return ErrNegativeInterval
-	}
+	// TODO(team): what should validate for in here? seems like all configuration fields can accept zero-values.
 	return nil
 }

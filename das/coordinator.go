@@ -9,7 +9,7 @@ import (
 
 // samplingCoordinator runs and coordinates sampling workers and updates current sampling state
 type samplingCoordinator struct {
-	concurrencyLimit uint
+	concurrencyLimit int
 
 	getter   header.Getter
 	sampleFn sampleFn
@@ -41,7 +41,7 @@ func newSamplingCoordinator(
 	sample sampleFn,
 ) *samplingCoordinator {
 	return &samplingCoordinator{
-		concurrencyLimit: params.concurrencyLimit,
+		concurrencyLimit: int(params.concurrencyLimit),
 		getter:           getter,
 		sampleFn:         sample,
 		state:            newCoordinatorState(params),
@@ -131,5 +131,5 @@ func (sc *samplingCoordinator) getCheckpoint(ctx context.Context) (checkpoint, e
 
 // concurrencyLimitReached indicates whether concurrencyLimit has been reached
 func (sc *samplingCoordinator) concurrencyLimitReached() bool {
-	return uint(len(sc.state.inProgress)) >= sc.concurrencyLimit
+	return len(sc.state.inProgress) >= sc.concurrencyLimit
 }
