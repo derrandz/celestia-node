@@ -23,7 +23,7 @@ type coordinatorState struct {
 }
 
 // newCoordinatorState initiates state for samplingCoordinator
-func newCoordinatorState(params dasingParams) coordinatorState {
+func newCoordinatorState(params parameters) coordinatorState {
 	return coordinatorState{
 		genesisHeight:     uint64(params.genesisHeight),
 		samplingRange:     uint64(params.samplingRange),

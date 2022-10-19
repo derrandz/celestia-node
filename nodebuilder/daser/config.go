@@ -1,12 +1,7 @@
 package daser
 
 import (
-	"errors"
 	"time"
-)
-
-var (
-	ErrNegativeInterval = errors.New("nodebuilder/daser: interval must be positive")
 )
 
 type Config struct {

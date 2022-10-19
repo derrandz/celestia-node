@@ -18,7 +18,7 @@ import (
 // TODO(@team): Should we DI this?
 var log = logging.Logger("das")
 
-type dasingParams struct {
+type parameters struct {
 	samplingRange     uint
 	concurrencyLimit  uint
 	bgStoreInterval   time.Duration
@@ -26,8 +26,8 @@ type dasingParams struct {
 	genesisHeight     uint
 }
 
-func defaultDasingParams() dasingParams {
-	return dasingParams{
+func defaultParameters() parameters {
+	return parameters{
 		samplingRange:     100,
 		concurrencyLimit:  16,
 		bgStoreInterval:   10 * time.Minute,
@@ -70,7 +70,7 @@ func WithParamGenesisHeight(genesisHeight uint) Option {
 
 // DASer continuously validates availability of data committed to headers.
 type DASer struct {
-	params dasingParams
+	params parameters
 
 	da     share.Availability
 	bcast  fraud.Broadcaster
@@ -99,7 +99,7 @@ func NewDASer(
 	options ...Option,
 ) *DASer {
 	d := &DASer{
-		params:         defaultDasingParams(),
+		params:         defaultParameters(),
 		da:             da,
 		bcast:          bcast,
 		hsub:           hsub,

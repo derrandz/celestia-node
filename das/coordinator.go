@@ -36,7 +36,7 @@ type result struct {
 }
 
 func newSamplingCoordinator(
-	params dasingParams,
+	params parameters,
 	getter header.Getter,
 	sample sampleFn,
 ) *samplingCoordinator {

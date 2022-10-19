@@ -17,23 +17,11 @@ type testParams struct {
 	networkHead  uint64
 	sampleFrom   uint64
 	timeoutDelay time.Duration
-	dasParams    dasingParams
-}
-
-func defaultDasParams() dasingParams {
-	params := dasingParams{
-		samplingRange:     10,
-		concurrencyLimit:  10,
-		bgStoreInterval:   10 * time.Minute,
-		priorityQueueSize: 16 * 4,
-		genesisHeight:     1,
-	}
-
-	return params
+	dasParams    parameters
 }
 
 func defaultTestParams() testParams {
-	dasParamsDefault := defaultDasParams()
+	dasParamsDefault := defaultParameters()
 	return testParams{
 		networkHead:  uint64(500),
 		sampleFrom:   uint64(dasParamsDefault.genesisHeight),
@@ -268,12 +256,9 @@ func TestCoordinator(t *testing.T) {
 func BenchmarkCoordinator(b *testing.B) {
 	timeoutDelay := 5 * time.Second
 
-	params := dasingParams{}
+	params := defaultParameters()
 	params.samplingRange = 10
 	params.concurrencyLimit = 100
-	params.bgStoreInterval = 10 * time.Minute
-	params.priorityQueueSize = 16 * 4
-	params.genesisHeight = 1
 
 	b.Run("bench run", func(b *testing.B) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeoutDelay)
