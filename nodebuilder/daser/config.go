@@ -1,7 +1,14 @@
 package daser
 
 import (
+	"errors"
 	"time"
+)
+
+var (
+	ErrNoSamplingRange = errors.New("nodebuilder/daser: misconfiguration error, sampling range cannot be 0")
+	ErrNoConcLimit     = errors.New("nodebuikder/daser: misconfiguration error, concurrency limit cannot be 0")
+	ErrNoGenesisHeight = errors.New("nodebuilder/daser: misconfiguration error, genesis height cannot be 0")
 )
 
 type Config struct {
@@ -33,7 +40,30 @@ func DefaultConfig() Config {
 }
 
 // Validate performs basic validation of the config.
+//
+// SamplingRange == 0 will as a result cause the jobs' queue to be empty, therefore no sampling jobs will be reserved and more importantly the DASer will break
+// ConcurrencyLimit == 0 will cause the number of workers to be 0 and thus no threads will be assigned to the waiting jobs therefore breaking the DASer
+// OR GenesisHeight == 0 there is no block height 0 to be sampled thus will break the DASer.
+//
+// # On the other hand
+//
+// BackgroundStoreInterval == 0 disables background storer,
+// PriorityQueueSize == 0 disables prioritisation of recently produced blocks for sampling
+//
+// Both of which won't break the DASer
 func (cfg *Config) Validate() error {
-	// TODO(team): what should validate for in here? seems like all configuration fields can accept zero-values.
+	// TODO(team): what should validate for in here? seems like all cfg.nfiguration fields can accept zero-values.
+	if cfg.SamplingRange == 0 {
+		return ErrNoSamplingRange
+	}
+
+	if cfg.ConcurrencyLimit == 0 {
+		return ErrNoConcLimit
+	}
+
+	if cfg.GenesisHeight == 0 {
+		return ErrNoGenesisHeight
+	}
+
 	return nil
 }
