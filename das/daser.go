@@ -15,8 +15,26 @@ import (
 	"github.com/celestiaorg/celestia-node/share"
 )
 
-// TODO(@team): Should we DI this?
-var log = logging.Logger("das")
+var (
+	log = logging.Logger("das")
+
+	ErrInvalidOptionValue = func(optionName string, value string) error {
+		errorMsg := fmt.Sprintf("das/daser: invalid option value: %s, cannot be %s", optionName, value)
+		return errors.New(errorMsg)
+	}
+)
+
+// optionSetter:
+//   this is expected to be a closure that encloses the operation of parameter setting along side with
+//   the value to be set.
+//   example: both d and a are in the "global scope" relatively to the closure, thus no parameter passing is required.
+//      func() {
+// .       d.params.option = a
+//      }
+//
+type optionSetter func()
+type Option func(*DASer) error
+type OptionValidator func(value any, optionSetter optionSetter) error
 
 type parameters struct {
 	samplingRange     uint
@@ -36,36 +54,105 @@ func defaultParameters() parameters {
 	}
 }
 
-type Option func(*DASer)
-
+// Option for: samplingRange
 func WithParamSamplingRange(samplingRange uint) Option {
-	return func(d *DASer) {
-		d.params.samplingRange = samplingRange
+	return func(d *DASer) error {
+		return samplingRangeMustBeValid(samplingRange, func() {
+			d.params.samplingRange = samplingRange
+		})
 	}
 }
 
+// OptionValidator for: samplingRange
+func samplingRangeMustBeValid(samplingRange uint, setOption optionSetter) error {
+	if samplingRange == 0 {
+		return ErrInvalidOptionValue(
+			"samplingRange",
+			"0",
+		)
+	}
+
+	setOption()
+	return nil
+}
+
+// Option for: concurrencyLimit
 func WithParamConcurrencyLimit(concurrencyLimit uint) Option {
-	return func(d *DASer) {
-		d.params.concurrencyLimit = concurrencyLimit
+	return func(d *DASer) error {
+		return concurrencyLimitMustBeValid(concurrencyLimit, func() {
+			d.params.concurrencyLimit = concurrencyLimit
+		})
 	}
 }
 
+// OptionValidator for: concurrencyLimit
+func concurrencyLimitMustBeValid(concurrencyLimit uint, setOption optionSetter) error {
+	if concurrencyLimit == 0 {
+		return ErrInvalidOptionValue(
+			"concurrencyLimit",
+			"0",
+		)
+	}
+
+	setOption()
+	return nil
+}
+
+// Option for: bgStoreInterval
 func WithParamBackgroundStoreInterval(bgStoreInterval time.Duration) Option {
-	return func(d *DASer) {
-		d.params.bgStoreInterval = bgStoreInterval
+	return func(d *DASer) error {
+		return bgStoreIntervalMustBeValid(bgStoreInterval, func() {
+			d.params.bgStoreInterval = bgStoreInterval
+		})
 	}
 }
 
+// OptionValidator for: bgStoreInterval
+// No real validation is taking place because all values are valid.
+// Using just to stay consistent with the pattern
+// TODO(team): Maybe we should define an upper bound?
+func bgStoreIntervalMustBeValid(bgStoreInterval time.Duration, setOption optionSetter) error {
+	setOption()
+	return nil
+}
+
+// Option for: priorityQueueSize
 func WithParamPriorityQueueSize(priorityQueueSize uint) Option {
-	return func(d *DASer) {
-		d.params.priorityQueueSize = priorityQueueSize
+	return func(d *DASer) error {
+		return priorityQueueSizeMustBeValid(priorityQueueSize, func() {
+			d.params.priorityQueueSize = priorityQueueSize
+		})
 	}
 }
 
+// OptionValidaor for: priorityQueueSize
+// No real validation is taking place because all values are valid.
+// Using just to stay consistent with the pattern
+func priorityQueueSizeMustBeValid(priorityQueueSize uint, setOption optionSetter) error {
+	setOption()
+	return nil
+}
+
+// Option for: genesisHeight
 func WithParamGenesisHeight(genesisHeight uint) Option {
-	return func(d *DASer) {
-		d.params.genesisHeight = genesisHeight
+	return func(d *DASer) error {
+		return genesisHeightMustBeValid(genesisHeight, func() {
+			d.params.genesisHeight = genesisHeight
+		})
 	}
+}
+
+// OptionValidator for: genesisHeight
+func genesisHeightMustBeValid(genesisHeight uint, setOption optionSetter) error {
+	if genesisHeight == 0 {
+		return ErrInvalidOptionValue(
+			"genesisHeight",
+			"0",
+		)
+	}
+
+	setOption()
+	return nil
 }
 
 // DASer continuously validates availability of data committed to headers.
@@ -110,7 +197,10 @@ func NewDASer(
 	}
 
 	for _, applyOpt := range options {
-		applyOpt(d)
+		err := applyOpt(d)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	d.sampler = newSamplingCoordinator(d.params, getter, d.sample)
