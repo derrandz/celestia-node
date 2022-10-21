@@ -5,20 +5,21 @@ import (
 	"time"
 )
 
+// Config contains configuration parameters for the DASer (or DASing process)
 type Config struct {
-	//  samplingRange is the maximum amount of headers processed in one job.
+	//  SamplingRange is the maximum amount of headers processed in one job.
 	SamplingRange uint
 
-	// concurrencyLimit defines the maximum amount of sampling workers running in parallel.
+	// ConcurrencyLimit defines the maximum amount of sampling workers running in parallel.
 	ConcurrencyLimit uint
 
-	// backgroundStoreInterval is the period of time for background checkpointStore to perform a checkpoint backup.
+	// BackgroundStoreInterval is the period of time for background checkpointStore to perform a checkpoint backup.
 	BackgroundStoreInterval time.Duration
 
-	// priorityQueueSize defines the size limit of the priority queue
+	// PriorityQueueSize defines the size limit of the priority queue
 	PriorityQueueSize uint
 
-	// genesisHeight is the height sampling will start from
+	// GenesisHeight is the height sampling will start from
 	GenesisHeight uint
 }
 
@@ -53,17 +54,16 @@ func DefaultConfig() Config {
 //
 // Both of which won't break the DASer
 func (cfg *Config) Validate() error {
-	// TODO(team): what should validate for in here? seems like all cfg.nfiguration fields can accept zero-values.
 	if cfg.SamplingRange == 0 {
-		return errors.New("moddaser: misconfiguration error, sampling range cannot be 0")
+		return errors.New("moddas misconfiguration: sampling range cannot be 0")
 	}
 
 	if cfg.ConcurrencyLimit == 0 {
-		return errors.New("moddaser: misconfiguration error, concurrency limit cannot be 0")
+		return errors.New("moddas misconfiguration: concurrency limit cannot be 0")
 	}
 
 	if cfg.GenesisHeight == 0 {
-		return errors.New("nodebuilder/daser: misconfiguration error, genesis height cannot be 0")
+		return errors.New("moddas: misconfiguration error, genesis height cannot be 0")
 	}
 
 	return nil

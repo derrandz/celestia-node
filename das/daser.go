@@ -45,7 +45,7 @@ func NewDASer(
 	dstore datastore.Datastore,
 	bcast fraud.Broadcaster,
 	options ...Option,
-) *DASer {
+) (*DASer, error) {
 	d := &DASer{
 		params:         defaultParameters(),
 		da:             da,
@@ -60,13 +60,13 @@ func NewDASer(
 	for _, applyOpt := range options {
 		err := applyOpt(d)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
 
 	d.sampler = newSamplingCoordinator(d.params, getter, d.sample)
 
-	return d
+	return d, nil
 }
 
 // Start initiates subscription for new ExtendedHeaders and spawns a sampling routine.

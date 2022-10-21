@@ -1,20 +1,21 @@
 package das
 
 import (
-	"errors"
 	"fmt"
 	"time"
 )
 
 var (
+	ErrInvalidOption      = fmt.Errorf("das: invalid option")
 	ErrInvalidOptionValue = func(optionName string, value string) error {
-		errorMsg := fmt.Sprintf("das/daser: invalid option value: %s, cannot be %s", optionName, value)
-		return errors.New(errorMsg)
+		return fmt.Errorf("%w: value %s cannot be %s", ErrInvalidOption, optionName, value)
 	}
 )
 
+// Type Option is the functional option that is applied to the daser instance for parameters configuration
 type Option func(*DASer) error
 
+// Type parameters is the set of parameters that must be configured for the daser
 type parameters struct {
 	samplingRange     uint
 	concurrencyLimit  uint
@@ -23,6 +24,7 @@ type parameters struct {
 	genesisHeight     uint
 }
 
+// defaultParameters returns the default configuration values for the daser parameters
 func defaultParameters() parameters {
 	return parameters{
 		samplingRange:     100,
@@ -33,7 +35,20 @@ func defaultParameters() parameters {
 	}
 }
 
-// Option for: samplingRange
+// WithSamplingRange is a functional option to configure the daser's `samplingRange` parameter
+// ```
+//
+//	WithSamplingRange(10)(daser)
+//
+// ```
+// or
+// ```
+//
+//	option := WithSamplingRange(10)
+//	// shenanigans to create daser
+//	option(daser)
+//
+// ```
 func WithSamplingRange(samplingRange uint) Option {
 	return func(d *DASer) error {
 		if samplingRange == 0 {
@@ -49,7 +64,8 @@ func WithSamplingRange(samplingRange uint) Option {
 	}
 }
 
-// Option for: concurrencyLimit
+// WithConcurrencyLimit is a functional option to configure the daser's `concurrencyLimit` parameter
+// Refer to WithSamplingRange documentation to see an example of how to use this
 func WithConcurrencyLimit(concurrencyLimit uint) Option {
 	return func(d *DASer) error {
 		if concurrencyLimit == 0 {
@@ -63,7 +79,8 @@ func WithConcurrencyLimit(concurrencyLimit uint) Option {
 	}
 }
 
-// Option for: bgStoreInterval
+// WithBackgroundStoreInterval is a functional option to configure the daser's `backgroundStoreINterval` parameter
+// Refer to WithSamplingRange documentation to see an example of how to use this
 func WithBackgroundStoreInterval(bgStoreInterval time.Duration) Option {
 	return func(d *DASer) error {
 		d.params.bgStoreInterval = bgStoreInterval
@@ -71,7 +88,8 @@ func WithBackgroundStoreInterval(bgStoreInterval time.Duration) Option {
 	}
 }
 
-// Option for: priorityQueueSize
+// WithPriorityQueueSize is a functional option to configure the daser's `priorityQueuSize` parameter
+// Refer to WithSamplingRange documentation to see an example of how to use this
 func WithPriorityQueueSize(priorityQueueSize uint) Option {
 	return func(d *DASer) error {
 		d.params.priorityQueueSize = priorityQueueSize
@@ -79,7 +97,8 @@ func WithPriorityQueueSize(priorityQueueSize uint) Option {
 	}
 }
 
-// Option for: genesisHeight
+// WithGenesisHeight is a functional option to configure the daser's `GenesisHeight` parameter
+// Refer to WithSamplingRange documentation to see an example of how to use this
 func WithGenesisHeight(genesisHeight uint) Option {
 	return func(d *DASer) error {
 		if genesisHeight == 0 {
