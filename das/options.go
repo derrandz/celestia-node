@@ -12,7 +12,7 @@ var (
 	}
 )
 
-// Type Option is the functional option that is applied to the daser instance for parameters configuration
+// Type Option is the functional option that is applied to the daser instance for parameters configuration.
 type Option func(*DASer) error
 
 // Type parameters is the set of parameters that must be configured for the daser
