@@ -1,4 +1,4 @@
-package daser
+package das
 
 import (
 	"context"
@@ -21,11 +21,11 @@ func ConstructModule(tp node.Type, cfg *Config) fx.Option {
 		fx.Provide(
 			func(c Config) []das.Option {
 				return []das.Option{
-					das.WithParamSamplingRange(c.SamplingRange),
-					das.WithParamConcurrencyLimit(c.ConcurrencyLimit),
-					das.WithParamPriorityQueueSize(c.PriorityQueueSize),
-					das.WithParamBackgroundStoreInterval(c.BackgroundStoreInterval),
-					das.WithParamGenesisHeight(c.GenesisHeight),
+					das.WithSamplingRange(c.SamplingRange),
+					das.WithConcurrencyLimit(c.ConcurrencyLimit),
+					das.WithPriorityQueueSize(c.PriorityQueueSize),
+					das.WithBackgroundStoreInterval(c.BackgroundStoreInterval),
+					das.WithGenesisHeight(c.GenesisHeight),
 				}
 			},
 		),

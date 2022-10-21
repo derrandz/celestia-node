@@ -1,4 +1,4 @@
-package daser
+package das
 
 import (
 	"github.com/ipfs/go-datastore"

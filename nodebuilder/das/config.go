@@ -1,14 +1,8 @@
-package daser
+package das
 
 import (
 	"errors"
 	"time"
-)
-
-var (
-	ErrNoSamplingRange = errors.New("nodebuilder/daser: misconfiguration error, sampling range cannot be 0")
-	ErrNoConcLimit     = errors.New("nodebuikder/daser: misconfiguration error, concurrency limit cannot be 0")
-	ErrNoGenesisHeight = errors.New("nodebuilder/daser: misconfiguration error, genesis height cannot be 0")
 )
 
 type Config struct {
@@ -61,15 +55,15 @@ func DefaultConfig() Config {
 func (cfg *Config) Validate() error {
 	// TODO(team): what should validate for in here? seems like all cfg.nfiguration fields can accept zero-values.
 	if cfg.SamplingRange == 0 {
-		return ErrNoSamplingRange
+		return errors.New("moddaser: misconfiguration error, sampling range cannot be 0")
 	}
 
 	if cfg.ConcurrencyLimit == 0 {
-		return ErrNoConcLimit
+		return errors.New("moddaser: misconfiguration error, concurrency limit cannot be 0")
 	}
 
 	if cfg.GenesisHeight == 0 {
-		return ErrNoGenesisHeight
+		return errors.New("nodebuilder/daser: misconfiguration error, genesis height cannot be 0")
 	}
 
 	return nil
