@@ -41,14 +41,21 @@ func DefaultConfig() Config {
 
 // Validate performs basic validation of the config.
 //
-// SamplingRange == 0 will as a result cause the jobs' queue to be empty, therefore no sampling jobs will be reserved and more importantly the DASer will break
-// ConcurrencyLimit == 0 will cause the number of workers to be 0 and thus no threads will be assigned to the waiting jobs therefore breaking the DASer
+// SamplingRange == 0 will cause the jobs' queue to be empty
+//
+//	therefore no sampling jobs will be reserved and more importantly
+//	 the DASer will break
+//
+// ConcurrencyLimit == 0 will cause the number of workers to be 0 and thus
+//
+//	no threads will be assigned to the waiting jobs therefore breaking the DASer
+//
 // OR GenesisHeight == 0 there is no block height 0 to be sampled thus will break the DASer.
 //
 // # On the other hand
 //
 // BackgroundStoreInterval == 0 disables background storer,
-// PriorityQueueSize == 0 disables prioritisation of recently produced blocks for sampling
+// PriorityQueueSize == 0 disables prioritization of recently produced blocks for sampling
 //
 // Both of which won't break the DASer
 func (cfg *Config) Validate() error {

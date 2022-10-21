@@ -25,13 +25,15 @@ var (
 )
 
 // optionSetter:
-//   this is expected to be a closure that encloses the operation of parameter setting along side with
-//   the value to be set.
-//   example: both d and a are in the "global scope" relatively to the closure, thus no parameter passing is required.
-//      func() {
-// .       d.params.option = a
-//      }
 //
+//	this is expected to be a closure that encloses the operation of parameter setting along side with
+//	the value to be set.
+//	example: both d and a are in the "global scope" relatively to the closure, thus no parameter passing is required.
+//	   func() {
+//
+// .       d.params.option = a
+//
+//	}
 type optionSetter func()
 type Option func(*DASer) error
 type OptionValidator func(value any, optionSetter optionSetter) error

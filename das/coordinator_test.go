@@ -104,7 +104,11 @@ func TestCoordinator(t *testing.T) {
 		lk := newLock(testParams.sampleFrom, testParams.sampleFrom)
 
 		// expect worker to prioritize newly discovered  (20 -> 10) and then old (0 -> 10)
-		order := newCheckOrder().addInterval(testParams.sampleFrom, uint64(testParams.dasParams.samplingRange)) // worker will pick up first job before discovery
+		order := newCheckOrder().addInterval(
+			testParams.sampleFrom,
+			uint64(testParams.dasParams.samplingRange),
+		) // worker will pick up first job before discovery
+
 		order.addStacks(testParams.networkHead+1, toBeDiscovered, uint64(testParams.dasParams.samplingRange))
 		order.addInterval(uint64(testParams.dasParams.samplingRange+1), toBeDiscovered)
 
