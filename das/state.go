@@ -25,15 +25,15 @@ type coordinatorState struct {
 // newCoordinatorState initiates state for samplingCoordinator
 func newCoordinatorState(params parameters) coordinatorState {
 	return coordinatorState{
-		genesisHeight:     uint64(params.genesisHeight),
-		samplingRange:     uint64(params.samplingRange),
-		priorityQueueSize: int(params.priorityQueueSize),
+		genesisHeight:     params.genesisHeight,
+		samplingRange:     params.samplingRange,
+		priorityQueueSize: params.priorityQueueSize,
 		priority:          make([]job, 0),
 		inProgress:        make(map[int]func() workerState),
 		failed:            make(map[uint64]int),
 		nextJobID:         0,
-		next:              uint64(params.genesisHeight),
-		networkHead:       uint64(params.genesisHeight),
+		next:              params.genesisHeight,
+		networkHead:       params.genesisHeight,
 		catchUpDone:       false,
 		catchUpDoneCh:     make(chan struct{}),
 	}

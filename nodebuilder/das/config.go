@@ -8,19 +8,19 @@ import (
 // Config contains configuration parameters for the DASer (or DASing process)
 type Config struct {
 	//  SamplingRange is the maximum amount of headers processed in one job.
-	SamplingRange uint
+	SamplingRange uint64
 
 	// ConcurrencyLimit defines the maximum amount of sampling workers running in parallel.
-	ConcurrencyLimit uint
+	ConcurrencyLimit int
 
 	// BackgroundStoreInterval is the period of time for background checkpointStore to perform a checkpoint backup.
 	BackgroundStoreInterval time.Duration
 
 	// PriorityQueueSize defines the size limit of the priority queue
-	PriorityQueueSize uint
+	PriorityQueueSize int
 
 	// GenesisHeight is the height sampling will start from
-	GenesisHeight uint
+	GenesisHeight uint64
 }
 
 // TODO(@derrandz): parameters needs performance testing on real network to define optimal values
@@ -63,7 +63,7 @@ func (cfg *Config) Validate() error {
 	}
 
 	if cfg.GenesisHeight == 0 {
-		return errors.New("moddas: misconfiguration error, genesis height cannot be 0")
+		return errors.New("moddas: misconfiguration: genesis height cannot be 0")
 	}
 
 	return nil

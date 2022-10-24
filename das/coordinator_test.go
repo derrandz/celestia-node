@@ -89,11 +89,11 @@ func TestCoordinator(t *testing.T) {
 		// expect worker to prioritize newly discovered  (20 -> 10) and then old (0 -> 10)
 		order := newCheckOrder().addInterval(
 			testParams.sampleFrom,
-			uint64(testParams.dasParams.samplingRange),
+			testParams.dasParams.samplingRange,
 		) // worker will pick up first job before discovery
 
-		order.addStacks(testParams.networkHead+1, toBeDiscovered, uint64(testParams.dasParams.samplingRange))
-		order.addInterval(uint64(testParams.dasParams.samplingRange+1), toBeDiscovered)
+		order.addStacks(testParams.networkHead+1, toBeDiscovered, testParams.dasParams.samplingRange)
+		order.addInterval(testParams.dasParams.samplingRange+1, toBeDiscovered)
 
 		// start coordinator
 		coordinator := newSamplingCoordinator(testParams.dasParams, getterStub{},
@@ -546,7 +546,7 @@ func defaultTestParams() testParams {
 	dasParamsDefault := defaultParameters()
 	return testParams{
 		networkHead:  uint64(500),
-		sampleFrom:   uint64(dasParamsDefault.genesisHeight),
+		sampleFrom:   dasParamsDefault.genesisHeight,
 		timeoutDelay: 125 * time.Second,
 		dasParams:    dasParamsDefault,
 	}

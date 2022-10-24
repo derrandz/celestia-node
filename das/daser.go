@@ -86,8 +86,8 @@ func (d *DASer) Start(ctx context.Context) error {
 		log.Warnw("checkpoint not found, initializing with height 1")
 
 		cp = checkpoint{
-			SampleFrom:  uint64(d.params.genesisHeight),
-			NetworkHead: uint64(d.params.genesisHeight),
+			SampleFrom:  d.params.genesisHeight,
+			NetworkHead: d.params.genesisHeight,
 		}
 
 		// attempt to get head info. No need to handle error, later DASer

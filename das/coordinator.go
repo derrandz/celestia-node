@@ -41,7 +41,7 @@ func newSamplingCoordinator(
 	sample sampleFn,
 ) *samplingCoordinator {
 	return &samplingCoordinator{
-		concurrencyLimit: int(params.concurrencyLimit),
+		concurrencyLimit: params.concurrencyLimit,
 		getter:           getter,
 		sampleFn:         sample,
 		state:            newCoordinatorState(params),

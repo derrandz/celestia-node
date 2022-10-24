@@ -18,11 +18,11 @@ type Option func(*DASer) error
 
 // Type parameters is the set of parameters that must be configured for the daser
 type parameters struct {
-	samplingRange     uint
-	concurrencyLimit  uint
+	samplingRange     uint64
+	concurrencyLimit  int
 	bgStoreInterval   time.Duration
-	priorityQueueSize uint
-	genesisHeight     uint
+	priorityQueueSize int
+	genesisHeight     uint64
 }
 
 // defaultParameters returns the default configuration values for the daser parameters
@@ -50,7 +50,7 @@ func defaultParameters() parameters {
 //	option(daser)
 //
 // ```
-func WithSamplingRange(samplingRange uint) Option {
+func WithSamplingRange(samplingRange uint64) Option {
 	return func(d *DASer) error {
 		if samplingRange == 0 {
 			return errInvalidOptionValue(
@@ -67,7 +67,7 @@ func WithSamplingRange(samplingRange uint) Option {
 
 // WithConcurrencyLimit is a functional option to configure the daser's `concurrencyLimit` parameter
 // Refer to WithSamplingRange documentation to see an example of how to use this
-func WithConcurrencyLimit(concurrencyLimit uint) Option {
+func WithConcurrencyLimit(concurrencyLimit int) Option {
 	return func(d *DASer) error {
 		if concurrencyLimit == 0 {
 			return errInvalidOptionValue(
@@ -91,7 +91,7 @@ func WithBackgroundStoreInterval(bgStoreInterval time.Duration) Option {
 
 // WithPriorityQueueSize is a functional option to configure the daser's `priorityQueuSize` parameter
 // Refer to WithSamplingRange documentation to see an example of how to use this
-func WithPriorityQueueSize(priorityQueueSize uint) Option {
+func WithPriorityQueueSize(priorityQueueSize int) Option {
 	return func(d *DASer) error {
 		d.params.priorityQueueSize = priorityQueueSize
 		return nil
@@ -100,7 +100,7 @@ func WithPriorityQueueSize(priorityQueueSize uint) Option {
 
 // WithGenesisHeight is a functional option to configure the daser's `GenesisHeight` parameter
 // Refer to WithSamplingRange documentation to see an example of how to use this
-func WithGenesisHeight(genesisHeight uint) Option {
+func WithGenesisHeight(genesisHeight uint64) Option {
 	return func(d *DASer) error {
 		if genesisHeight == 0 {
 			return errInvalidOptionValue(
