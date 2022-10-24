@@ -34,7 +34,7 @@ type DASer struct {
 	running        int32
 }
 
-type listenFn func(ctx context.Context, height uint64)
+type listenFn func(ctx context.Context, height uint)
 type sampleFn func(context.Context, *header.ExtendedHeader) error
 
 // NewDASer creates a new DASer.
@@ -93,7 +93,7 @@ func (d *DASer) Start(ctx context.Context) error {
 		// attempt to get head info. No need to handle error, later DASer
 		// will be able to find new head from subscriber after it is started
 		if h, err := d.getter.Head(ctx); err == nil {
-			cp.NetworkHead = uint64(h.Height)
+			cp.NetworkHead = uint(h.Height)
 		}
 	}
 	log.Info("starting DASer from checkpoint: ", cp.String())
@@ -149,6 +149,7 @@ func (d *DASer) sample(ctx context.Context, h *header.ExtendedHeader) error {
 		var byzantineErr *share.ErrByzantine
 		if errors.As(err, &byzantineErr) {
 			log.Warn("Propagating proof...")
+			// TODO(team): remove type conversion uint64(h.Height) in dedicated PR that deals with the fraud service
 			sendErr := d.bcast.Broadcast(ctx, fraud.CreateBadEncodingProof(h.Hash(), uint64(h.Height), byzantineErr))
 			if sendErr != nil {
 				log.Errorw("fraud proof propagating failed", "err", sendErr)

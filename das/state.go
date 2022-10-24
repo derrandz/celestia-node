@@ -6,17 +6,17 @@ import (
 
 // coordinatorState represents the current state of sampling
 type coordinatorState struct {
-	genesisHeight uint64
-	samplingRange uint64 // is the maximum amount of headers processed in one job.
+	genesisHeight uint
+	samplingRange uint // is the maximum amount of headers processed in one job.
 
 	priorityQueueSize int                        // the size of the priority queue
 	priority          []job                      // list of headers heights that will be sampled with higher priority
 	inProgress        map[int]func() workerState // keeps track of running workers
-	failed            map[uint64]int             // stores heights of failed headers with amount of attempt as value
+	failed            map[uint]int               // stores heights of failed headers with amount of attempt as value
 
 	nextJobID   int
-	next        uint64 // all headers before next were sent to workers
-	networkHead uint64
+	next        uint // all headers before next were sent to workers
+	networkHead uint
 
 	catchUpDone   bool          // indicates if all headers are sampled
 	catchUpDoneCh chan struct{} // blocks until all headers are sampled
@@ -30,7 +30,7 @@ func newCoordinatorState(params parameters) coordinatorState {
 		priorityQueueSize: params.priorityQueueSize,
 		priority:          make([]job, 0),
 		inProgress:        make(map[int]func() workerState),
-		failed:            make(map[uint64]int),
+		failed:            make(map[uint]int),
 		nextJobID:         0,
 		next:              params.genesisHeight,
 		networkHead:       params.genesisHeight,
@@ -52,7 +52,7 @@ func (s *coordinatorState) resumeFromCheckpoint(c checkpoint) {
 func (s *coordinatorState) handleResult(res result) {
 	delete(s.inProgress, res.id)
 
-	failedFromWorker := make(map[uint64]bool)
+	failedFromWorker := make(map[uint]bool)
 	for _, h := range res.failed {
 		failedFromWorker[h] = true
 	}
@@ -74,14 +74,13 @@ func (s *coordinatorState) handleResult(res result) {
 	s.checkDone()
 }
 
-func (s *coordinatorState) updateHead(last uint64) bool {
+func (s *coordinatorState) updateHead(last uint) bool {
 	// seen this header before
 	if last <= s.networkHead {
 		log.Warnf("received head height: %v, which is lower or the same as previously known: %v", last, s.networkHead)
 		return false
 	}
 
-	// TODO(@derrandz): question to @walldiss, why is networkHead uint64 to begin with?
 	if s.networkHead == s.genesisHeight {
 		s.networkHead = last
 		log.Infow("found first header, starting sampling")
@@ -115,7 +114,7 @@ func (s *coordinatorState) nextJob() (next job, found bool) {
 
 	j := s.newJob(s.next, s.networkHead)
 
-	// TODO(@derrandz): same here @walldiss why is next a uint64?
+	// TODO(@derrandz): same here @walldiss why is next a uint?
 	s.next += s.samplingRange
 	if s.next > s.networkHead {
 		s.next = s.networkHead + 1
@@ -143,7 +142,7 @@ func (s *coordinatorState) putInProgress(jobID int, getState func() workerState)
 	s.inProgress[jobID] = getState
 }
 
-func (s *coordinatorState) newJob(from, max uint64) job {
+func (s *coordinatorState) newJob(from, max uint) job {
 	s.nextJobID++
 	to := from + s.samplingRange - 1
 	if to > max {
@@ -160,7 +159,7 @@ func (s *coordinatorState) newJob(from, max uint64) job {
 func (s *coordinatorState) unsafeStats() SamplingStats {
 	workers := make([]WorkerStats, 0, len(s.inProgress))
 	lowestFailedOrInProgress := s.next
-	failed := make(map[uint64]int)
+	failed := make(map[uint]int)
 
 	// gather worker stats
 	for _, getStats := range s.inProgress {

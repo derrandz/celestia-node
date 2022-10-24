@@ -13,7 +13,7 @@ import (
 
 func TestCheckpointStore(t *testing.T) {
 	ds := newCheckpointStore(sync.MutexWrap(datastore.NewMapDatastore()))
-	failed := make(map[uint64]int)
+	failed := make(map[uint]int)
 	failed[2] = 1
 	failed[3] = 2
 	cp := checkpoint{

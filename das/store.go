@@ -77,7 +77,7 @@ func (s *checkpointStore) runBackgroundStore(
 	ticker := time.NewTicker(storeInterval)
 	defer ticker.Stop()
 
-	var prev uint64
+	var prev uint
 	for {
 		// blocked by ticker to perform storing only once in a period
 		select {

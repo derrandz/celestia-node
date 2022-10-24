@@ -27,7 +27,7 @@ func Test_coordinatorStats(t *testing.T) {
 								To:   30,
 							},
 							Curr:   25,
-							failed: []uint64{22},
+							failed: []uint{22},
 							Err:    errors.New("22: failed"),
 						}
 					},
@@ -38,12 +38,12 @@ func Test_coordinatorStats(t *testing.T) {
 								To:   20,
 							},
 							Curr:   15,
-							failed: []uint64{12, 13},
+							failed: []uint{12, 13},
 							Err:    multierr.Append(errors.New("12: failed"), errors.New("13: failed")),
 						}
 					},
 				},
-				failed:      map[uint64]int{22: 1, 23: 1, 24: 2},
+				failed:      map[uint]int{22: 1, 23: 1, 24: 2},
 				nextJobID:   0,
 				next:        31,
 				networkHead: 100,
@@ -52,7 +52,7 @@ func Test_coordinatorStats(t *testing.T) {
 				SampledChainHead: 11,
 				CatchupHead:      30,
 				NetworkHead:      100,
-				Failed:           map[uint64]int{22: 2, 23: 1, 24: 2, 12: 1, 13: 1},
+				Failed:           map[uint]int{22: 2, 23: 1, 24: 2, 12: 1, 13: 1},
 				Workers: []WorkerStats{
 					{
 						Curr:   25,

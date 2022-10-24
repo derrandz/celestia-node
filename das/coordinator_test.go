@@ -51,7 +51,7 @@ func TestCoordinator(t *testing.T) {
 		// discover new height
 		for i := 0; i < 200; i++ {
 			// mess the order by running in go-routine
-			sampler.discover(ctx, testParams.networkHead+uint64(i), coordinator.listen)
+			sampler.discover(ctx, testParams.networkHead+uint(i), coordinator.listen)
 		}
 
 		// check if all jobs were sampled successfully
@@ -77,7 +77,7 @@ func TestCoordinator(t *testing.T) {
 
 		testParams.sampleFrom = 1
 		testParams.networkHead = 10
-		toBeDiscovered := uint64(20)
+		toBeDiscovered := uint(20)
 
 		sampler := newMockSampler(testParams.sampleFrom, testParams.networkHead)
 
@@ -132,7 +132,7 @@ func TestCoordinator(t *testing.T) {
 	t.Run("priority routine should not lock other workers", func(t *testing.T) {
 		testParams := defaultTestParams()
 
-		testParams.networkHead = uint64(20)
+		testParams.networkHead = uint(20)
 		ctx, cancel := context.WithTimeout(context.Background(), testParams.timeoutDelay)
 
 		sampler := newMockSampler(testParams.sampleFrom, testParams.networkHead)
@@ -183,7 +183,7 @@ func TestCoordinator(t *testing.T) {
 		testParams.sampleFrom = 1
 		ctx, cancel := context.WithTimeout(context.Background(), testParams.timeoutDelay)
 
-		bornToFail := []uint64{4, 8, 15, 16, 23, 42}
+		bornToFail := []uint{4, 8, 15, 16, 23, 42}
 		sampler := newMockSampler(testParams.sampleFrom, testParams.networkHead, bornToFail...)
 
 		coordinator := newSamplingCoordinator(testParams.dasParams, getterStub{}, onceMiddleWare(sampler.sample))
@@ -208,11 +208,11 @@ func TestCoordinator(t *testing.T) {
 	t.Run("failed should retry on restart", func(t *testing.T) {
 		testParams := defaultTestParams()
 
-		testParams.sampleFrom = uint64(50)
+		testParams.sampleFrom = uint(50)
 		ctx, cancel := context.WithTimeout(context.Background(), testParams.timeoutDelay)
 
-		failedLastRun := map[uint64]int{4: 1, 8: 2, 15: 1, 16: 1, 23: 1, 42: 1, testParams.sampleFrom - 1: 1}
-		failedAgain := []uint64{16}
+		failedLastRun := map[uint]int{4: 1, 8: 2, 15: 1, 16: 1, 23: 1, 42: 1, testParams.sampleFrom - 1: 1}
+		failedAgain := []uint{16}
 
 		sampler := newMockSampler(testParams.sampleFrom, testParams.networkHead, failedAgain...)
 		sampler.checkpoint.Failed = failedLastRun
@@ -232,7 +232,7 @@ func TestCoordinator(t *testing.T) {
 		assert.NoError(t, coordinator.wait(stopCtx))
 
 		expectedState := sampler.finalState()
-		expectedState.Failed = make(map[uint64]int)
+		expectedState.Failed = make(map[uint]int)
 		for _, v := range failedAgain {
 			expectedState.Failed[v] = failedLastRun[v] + 1
 		}
@@ -253,7 +253,7 @@ func BenchmarkCoordinator(b *testing.B) {
 			func(ctx context.Context, h *header.ExtendedHeader) error { return nil })
 		go coordinator.run(ctx, checkpoint{
 			SampleFrom:  1,
-			NetworkHead: uint64(b.N),
+			NetworkHead: uint(b.N),
 		})
 
 		// wait for coordinator to indicateDone catchup
@@ -269,15 +269,15 @@ type mockSampler struct {
 	lock sync.Mutex
 
 	checkpoint
-	bornToFail map[uint64]bool
-	done       map[uint64]int
+	bornToFail map[uint]bool
+	done       map[uint]int
 
 	isFinished bool
 	finishedCh chan struct{}
 }
 
-func newMockSampler(sampledBefore, sampleTo uint64, bornToFail ...uint64) mockSampler {
-	failMap := make(map[uint64]bool)
+func newMockSampler(sampledBefore, sampleTo uint, bornToFail ...uint) mockSampler {
+	failMap := make(map[uint]bool)
 	for _, h := range bornToFail {
 		failMap[h] = true
 	}
@@ -285,11 +285,11 @@ func newMockSampler(sampledBefore, sampleTo uint64, bornToFail ...uint64) mockSa
 		checkpoint: checkpoint{
 			SampleFrom:  sampledBefore,
 			NetworkHead: sampleTo,
-			Failed:      make(map[uint64]int),
+			Failed:      make(map[uint]int),
 			Workers:     make([]workerCheckpoint, 0),
 		},
 		bornToFail: failMap,
-		done:       make(map[uint64]int),
+		done:       make(map[uint]int),
 		finishedCh: make(chan struct{}),
 	}
 }
@@ -302,7 +302,7 @@ func (m *mockSampler) sample(ctx context.Context, h *header.ExtendedHeader) erro
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
-	height := uint64(h.Height)
+	height := uint(h.Height)
 	m.done[height]++
 
 	if len(m.done) > int(m.NetworkHead-m.SampleFrom) && !m.isFinished {
@@ -332,7 +332,7 @@ func (m *mockSampler) finished(ctx context.Context) error {
 	return nil
 }
 
-func (m *mockSampler) heightIsDone(h uint64) bool {
+func (m *mockSampler) heightIsDone(h uint) bool {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	return m.done[h] != 0
@@ -353,7 +353,7 @@ func (m *mockSampler) finalState() checkpoint {
 	return finalState
 }
 
-func (m *mockSampler) discover(ctx context.Context, newHeight uint64, emit func(ctx context.Context, h uint64)) {
+func (m *mockSampler) discover(ctx context.Context, newHeight uint, emit func(ctx context.Context, h uint)) {
 	m.lock.Lock()
 
 	if newHeight > m.checkpoint.NetworkHead {
@@ -376,14 +376,14 @@ func (m *mockSampler) sampledAmount() int {
 // ensures correct order of operations
 type checkOrder struct {
 	lock  sync.Mutex
-	queue []uint64
+	queue []uint
 }
 
 func newCheckOrder() *checkOrder {
 	return &checkOrder{}
 }
 
-func (o *checkOrder) addInterval(start, end uint64) *checkOrder {
+func (o *checkOrder) addInterval(start, end uint) *checkOrder {
 	o.lock.Lock()
 	defer o.lock.Unlock()
 
@@ -407,7 +407,7 @@ func (o *checkOrder) addInterval(start, end uint64) *checkOrder {
 }
 
 // splits interval into ranges with stackSize length and puts them with reverse order
-func (o *checkOrder) addStacks(start, end, stackSize uint64) uint64 {
+func (o *checkOrder) addStacks(start, end, stackSize uint) uint {
 	if start+stackSize-1 < end {
 		end = o.addStacks(start+stackSize, end, stackSize)
 	}
@@ -420,13 +420,13 @@ func (o *checkOrder) addStacks(start, end, stackSize uint64) uint64 {
 
 func TestOrder(t *testing.T) {
 	o := newCheckOrder().addInterval(0, 3).addInterval(3, 0)
-	assert.Equal(t, []uint64{0, 1, 2, 3, 3, 2, 1, 0}, o.queue)
+	assert.Equal(t, []uint{0, 1, 2, 3, 3, 2, 1, 0}, o.queue)
 }
 
 func TestStack(t *testing.T) {
 	o := newCheckOrder()
 	o.addStacks(10, 20, 3)
-	assert.Equal(t, []uint64{19, 20, 16, 17, 18, 13, 14, 15, 10, 11, 12}, o.queue)
+	assert.Equal(t, []uint{19, 20, 16, 17, 18, 13, 14, 15, 10, 11, 12}, o.queue)
 }
 
 func (o *checkOrder) middleWare(out sampleFn) sampleFn {
@@ -435,7 +435,7 @@ func (o *checkOrder) middleWare(out sampleFn) sampleFn {
 
 		if len(o.queue) > 0 {
 			// check last item in queue to be same as input
-			if o.queue[0] != uint64(h.Height) {
+			if o.queue[0] != uint(h.Height) {
 				o.lock.Unlock()
 				return fmt.Errorf("expected height: %v,got: %v", o.queue[0], h)
 			}
@@ -450,11 +450,11 @@ func (o *checkOrder) middleWare(out sampleFn) sampleFn {
 // blocks operations if item is in lock list
 type lock struct {
 	m         sync.Mutex
-	blockList map[uint64]chan struct{}
+	blockList map[uint]chan struct{}
 }
 
-func newLock(from, to uint64) *lock {
-	list := make(map[uint64]chan struct{})
+func newLock(from, to uint) *lock {
+	list := make(map[uint]chan struct{})
 	for from <= to {
 		list[from] = make(chan struct{})
 		from++
@@ -464,7 +464,7 @@ func newLock(from, to uint64) *lock {
 	}
 }
 
-func (l *lock) add(hs ...uint64) {
+func (l *lock) add(hs ...uint) {
 	l.m.Lock()
 	defer l.m.Unlock()
 	for _, h := range hs {
@@ -472,7 +472,7 @@ func (l *lock) add(hs ...uint64) {
 	}
 }
 
-func (l *lock) release(hs ...uint64) {
+func (l *lock) release(hs ...uint) {
 	l.m.Lock()
 	defer l.m.Unlock()
 
@@ -484,8 +484,8 @@ func (l *lock) release(hs ...uint64) {
 	}
 }
 
-func (l *lock) releaseAll(except ...uint64) {
-	m := make(map[uint64]bool)
+func (l *lock) releaseAll(except ...uint) {
+	m := make(map[uint]bool)
 	for _, h := range except {
 		m[h] = true
 	}
@@ -505,7 +505,7 @@ func (l *lock) releaseAll(except ...uint64) {
 func (l *lock) middleWare(out sampleFn) sampleFn {
 	return func(ctx context.Context, h *header.ExtendedHeader) error {
 		l.m.Lock()
-		ch, blocked := l.blockList[uint64(h.Height)]
+		ch, blocked := l.blockList[uint(h.Height)]
 		l.m.Unlock()
 		if !blocked {
 			return out(ctx, h)
@@ -536,8 +536,8 @@ func onceMiddleWare(out sampleFn) sampleFn {
 }
 
 type testParams struct {
-	networkHead  uint64
-	sampleFrom   uint64
+	networkHead  uint
+	sampleFrom   uint
 	timeoutDelay time.Duration
 	dasParams    parameters
 }
@@ -545,7 +545,7 @@ type testParams struct {
 func defaultTestParams() testParams {
 	dasParamsDefault := defaultParameters()
 	return testParams{
-		networkHead:  uint64(500),
+		networkHead:  uint(500),
 		sampleFrom:   dasParamsDefault.genesisHeight,
 		timeoutDelay: 125 * time.Second,
 		dasParams:    dasParamsDefault,

@@ -8,7 +8,7 @@ import (
 // Config contains configuration parameters for the DASer (or DASing process)
 type Config struct {
 	//  SamplingRange is the maximum amount of headers processed in one job.
-	SamplingRange uint64
+	SamplingRange uint
 
 	// ConcurrencyLimit defines the maximum amount of sampling workers running in parallel.
 	ConcurrencyLimit int
@@ -20,7 +20,7 @@ type Config struct {
 	PriorityQueueSize int
 
 	// GenesisHeight is the height sampling will start from
-	GenesisHeight uint64
+	GenesisHeight uint
 }
 
 // TODO(@derrandz): parameters needs performance testing on real network to define optimal values

@@ -19,7 +19,7 @@ type samplingCoordinator struct {
 	// resultCh fans-in sampling results from worker to coordinator
 	resultCh chan result
 	// updHeadCh signals to update network head header height
-	updHeadCh chan uint64
+	updHeadCh chan uint
 	// waitCh signals to block coordinator for external access to state
 	waitCh chan *sync.WaitGroup
 
@@ -31,7 +31,7 @@ type samplingCoordinator struct {
 // result will carry errors to coordinator after worker finishes the job
 type result struct {
 	job
-	failed []uint64
+	failed []uint
 	err    error
 }
 
@@ -46,7 +46,7 @@ func newSamplingCoordinator(
 		sampleFn:         sample,
 		state:            newCoordinatorState(params),
 		resultCh:         make(chan result),
-		updHeadCh:        make(chan uint64),
+		updHeadCh:        make(chan uint),
 		waitCh:           make(chan *sync.WaitGroup),
 		done:             newDone("sampling coordinator"),
 	}
@@ -99,7 +99,7 @@ func (sc *samplingCoordinator) runWorker(ctx context.Context, j job) {
 }
 
 // listen notifies the coordinator about a new network head received via subscription.
-func (sc *samplingCoordinator) listen(ctx context.Context, height uint64) {
+func (sc *samplingCoordinator) listen(ctx context.Context, height uint) {
 	select {
 	case sc.updHeadCh <- height:
 	case <-ctx.Done():

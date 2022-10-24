@@ -6,13 +6,13 @@ package das
 // over past headers from the last sampled checkpoint.
 type SamplingStats struct {
 	// all headers before SampledChainHead were successfully sampled
-	SampledChainHead uint64 `json:"head_of_sampled_chain"`
+	SampledChainHead uint `json:"head_of_sampled_chain"`
 	// all headers before CatchupHead were submitted to sampling workers
-	CatchupHead uint64 `json:"head_of_catchup"`
+	CatchupHead uint `json:"head_of_catchup"`
 	// NetworkHead is the height of the most recent header in the network
-	NetworkHead uint64 `json:"network_head_height"`
+	NetworkHead uint `json:"network_head_height"`
 	// Failed contains all skipped header's heights with corresponding try count
-	Failed map[uint64]int `json:"failed,omitempty"`
+	Failed map[uint]int `json:"failed,omitempty"`
 	// Workers has information about each currently running worker stats
 	Workers []WorkerStats `json:"workers,omitempty"`
 	// Concurrency currently running parallel workers
@@ -24,9 +24,9 @@ type SamplingStats struct {
 }
 
 type WorkerStats struct {
-	Curr uint64 `json:"current"`
-	From uint64 `json:"from"`
-	To   uint64 `json:"to"`
+	Curr uint `json:"current"`
+	From uint `json:"from"`
+	To   uint `json:"to"`
 
 	ErrMsg string `json:"error,omitempty"`
 }

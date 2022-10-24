@@ -22,16 +22,16 @@ type worker struct {
 type workerState struct {
 	job
 
-	Curr   uint64
+	Curr   uint
 	Err    error
-	failed []uint64
+	failed []uint
 }
 
 // job represents headers interval to be processed by worker
 type job struct {
 	id   int
-	From uint64
-	To   uint64
+	From uint
+	To   uint
 }
 
 func (w *worker) run(
@@ -46,7 +46,7 @@ func (w *worker) run(
 	for curr := w.state.From; curr <= w.state.To; curr++ {
 		startGet := time.Now()
 		// TODO: get headers in batches
-		h, err := getter.GetByHeight(ctx, curr)
+		h, err := getter.GetByHeight(ctx, uint64(curr))
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				// sampling worker will resume upon restart
@@ -95,12 +95,12 @@ func newWorker(j job) worker {
 		state: workerState{
 			job:    j,
 			Curr:   j.From,
-			failed: make([]uint64, 0),
+			failed: make([]uint, 0),
 		},
 	}
 }
 
-func (w *worker) setResult(curr uint64, err error) {
+func (w *worker) setResult(curr uint, err error) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	if err != nil {

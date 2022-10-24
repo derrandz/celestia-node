@@ -18,11 +18,11 @@ type Option func(*DASer) error
 
 // Type parameters is the set of parameters that must be configured for the daser
 type parameters struct {
-	samplingRange     uint64
+	samplingRange     uint
 	concurrencyLimit  int
 	bgStoreInterval   time.Duration
 	priorityQueueSize int
-	genesisHeight     uint64
+	genesisHeight     uint
 }
 
 // defaultParameters returns the default configuration values for the daser parameters
@@ -50,7 +50,7 @@ func defaultParameters() parameters {
 //	option(daser)
 //
 // ```
-func WithSamplingRange(samplingRange uint64) Option {
+func WithSamplingRange(samplingRange uint) Option {
 	return func(d *DASer) error {
 		if !(samplingRange > 0) {
 			return errInvalidOptionValue(
@@ -100,7 +100,7 @@ func WithPriorityQueueSize(priorityQueueSize int) Option {
 
 // WithGenesisHeight is a functional option to configure the daser's `GenesisHeight` parameter
 // Refer to WithSamplingRange documentation to see an example of how to use this
-func WithGenesisHeight(genesisHeight uint64) Option {
+func WithGenesisHeight(genesisHeight uint) Option {
 	return func(d *DASer) error {
 		if !(genesisHeight > 0) {
 			return errInvalidOptionValue(
