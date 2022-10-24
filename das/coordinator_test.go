@@ -13,23 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type testParams struct {
-	networkHead  uint64
-	sampleFrom   uint64
-	timeoutDelay time.Duration
-	dasParams    parameters
-}
-
-func defaultTestParams() testParams {
-	dasParamsDefault := defaultParameters()
-	return testParams{
-		networkHead:  uint64(500),
-		sampleFrom:   uint64(dasParamsDefault.genesisHeight),
-		timeoutDelay: 125 * time.Second,
-		dasParams:    dasParamsDefault,
-	}
-}
-
 func TestCoordinator(t *testing.T) {
 	t.Run("test run", func(t *testing.T) {
 		testParams := defaultTestParams()
@@ -549,5 +532,22 @@ func onceMiddleWare(out sampleFn) sampleFn {
 		}
 		m.Unlock()
 		return out(ctx, h)
+	}
+}
+
+type testParams struct {
+	networkHead  uint64
+	sampleFrom   uint64
+	timeoutDelay time.Duration
+	dasParams    parameters
+}
+
+func defaultTestParams() testParams {
+	dasParamsDefault := defaultParameters()
+	return testParams{
+		networkHead:  uint64(500),
+		sampleFrom:   uint64(dasParamsDefault.genesisHeight),
+		timeoutDelay: 125 * time.Second,
+		dasParams:    dasParamsDefault,
 	}
 }

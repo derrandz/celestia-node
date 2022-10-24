@@ -6,11 +6,12 @@ import (
 )
 
 var (
-	ErrInvalidOption      = fmt.Errorf("das: invalid option")
-	ErrInvalidOptionValue = func(optionName string, value string) error {
-		return fmt.Errorf("%w: value %s cannot be %s", ErrInvalidOption, optionName, value)
-	}
+	ErrInvalidOption = fmt.Errorf("das: invalid option")
 )
+
+func errInvalidOptionValue(optionName string, value string) error {
+	return fmt.Errorf("%w: value %s cannot be %s", ErrInvalidOption, optionName, value)
+}
 
 // Type Option is the functional option that is applied to the daser instance for parameters configuration.
 type Option func(*DASer) error
@@ -52,7 +53,7 @@ func defaultParameters() parameters {
 func WithSamplingRange(samplingRange uint) Option {
 	return func(d *DASer) error {
 		if samplingRange == 0 {
-			return ErrInvalidOptionValue(
+			return errInvalidOptionValue(
 				"samplingRange",
 				"0",
 			)
@@ -69,7 +70,7 @@ func WithSamplingRange(samplingRange uint) Option {
 func WithConcurrencyLimit(concurrencyLimit uint) Option {
 	return func(d *DASer) error {
 		if concurrencyLimit == 0 {
-			return ErrInvalidOptionValue(
+			return errInvalidOptionValue(
 				"concurrencyLimit",
 				"0",
 			)
@@ -102,7 +103,7 @@ func WithPriorityQueueSize(priorityQueueSize uint) Option {
 func WithGenesisHeight(genesisHeight uint) Option {
 	return func(d *DASer) error {
 		if genesisHeight == 0 {
-			return ErrInvalidOptionValue(
+			return errInvalidOptionValue(
 				"genesisHeight",
 				"0",
 			)
