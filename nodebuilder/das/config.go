@@ -54,16 +54,16 @@ func DefaultConfig() Config {
 //
 // Both of which won't break the DASer
 func (cfg *Config) Validate() error {
-	if cfg.SamplingRange == 0 {
-		return errors.New("moddas misconfiguration: sampling range cannot be 0")
+	if !(cfg.SamplingRange > 0) {
+		return errors.New("moddas misconfiguration: sampling range cannot be negative or 0")
 	}
 
-	if cfg.ConcurrencyLimit == 0 {
-		return errors.New("moddas misconfiguration: concurrency limit cannot be 0")
+	if !(cfg.ConcurrencyLimit > 0) {
+		return errors.New("moddas misconfiguration: concurrency limit cannot be negative or 0")
 	}
 
-	if cfg.GenesisHeight == 0 {
-		return errors.New("moddas: misconfiguration: genesis height cannot be 0")
+	if !(cfg.GenesisHeight > 0) {
+		return errors.New("moddas misconfiguration: genesis height cannot be negative or 0")
 	}
 
 	return nil

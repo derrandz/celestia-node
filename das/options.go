@@ -52,10 +52,10 @@ func defaultParameters() parameters {
 // ```
 func WithSamplingRange(samplingRange uint64) Option {
 	return func(d *DASer) error {
-		if samplingRange == 0 {
+		if !(samplingRange > 0) {
 			return errInvalidOptionValue(
 				"samplingRange",
-				"0",
+				"negative or 0",
 			)
 		}
 
@@ -69,10 +69,10 @@ func WithSamplingRange(samplingRange uint64) Option {
 // Refer to WithSamplingRange documentation to see an example of how to use this
 func WithConcurrencyLimit(concurrencyLimit int) Option {
 	return func(d *DASer) error {
-		if concurrencyLimit == 0 {
+		if !(concurrencyLimit > 0) {
 			return errInvalidOptionValue(
 				"concurrencyLimit",
-				"0",
+				"negative or 0",
 			)
 		}
 		d.params.concurrencyLimit = concurrencyLimit
@@ -102,10 +102,10 @@ func WithPriorityQueueSize(priorityQueueSize int) Option {
 // Refer to WithSamplingRange documentation to see an example of how to use this
 func WithGenesisHeight(genesisHeight uint64) Option {
 	return func(d *DASer) error {
-		if genesisHeight == 0 {
+		if !(genesisHeight > 0) {
 			return errInvalidOptionValue(
 				"genesisHeight",
-				"0",
+				"negative or 0",
 			)
 		}
 		d.params.genesisHeight = genesisHeight
