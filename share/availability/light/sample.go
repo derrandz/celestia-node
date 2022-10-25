@@ -7,7 +7,7 @@ import (
 )
 
 // DefaultSampleAmount sets the default amount of samples to be sampled from the network by ShareAvailability.
-var DefaultSampleAmount = 16
+var DefaultSampleAmount = 50
 
 // Sample is a point in 2D space over square.
 type Sample struct {
