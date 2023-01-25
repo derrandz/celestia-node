@@ -3,6 +3,9 @@
 package telemetry
 
 type Config struct {
+	// Enabled defines whether telemetry is enabled or not.
+	Enabled bool `toml:"enabled"`
+
 	// NodeUptimeScrapeInterval defines the interval at which node uptime
 	// metrics are scraped (in minutes)
 	NodeUptimeScrapeInterval int `toml:"metrics_scrape_interval"`
