@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	logging "github.com/ipfs/go-log/v2"
-
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument"
@@ -20,7 +18,6 @@ import (
 )
 
 var (
-	log   = logging.Logger("share-facade")
 	meter = global.MeterProvider().Meter("blackbox-share")
 )
 
@@ -37,7 +34,7 @@ const (
 	requestSizeMetricName = "node.share.blackbox.request_size"
 	requestSizeMetricDesc = "size of a get share response"
 
-	squareSizeMetricName = "node.share.blackbox.square_size"
+	squareSizeMetricName = "node.share.blackbox.eds_size"
 	squareSizeMetricDesc = "size of the erasure coded block"
 )
 
@@ -50,7 +47,7 @@ type instrumentedShareGetter struct {
 	requestsNum     syncint64.Counter
 	requestDuration syncint64.Histogram
 	requestSize     syncint64.Histogram
-	squareSize      syncint64.UpDownCounter
+	squareSize      syncint64.Histogram
 
 	// pointer to mod
 	next share.Getter
@@ -89,7 +86,7 @@ func newInstrument(next share.Getter) (share.Getter, error) {
 
 	squareSize, err := meter.
 		SyncInt64().
-		UpDownCounter(
+		Histogram(
 			squareSizeMetricName,
 			instrument.WithDescription(squareSizeMetricDesc),
 		)
@@ -127,7 +124,11 @@ func (ins *instrumentedShareGetter) GetShare(ctx context.Context, root *share.Ro
 
 	// measure the EDS size
 	// this will track the EDS size for light nodes
-	ins.squareSize.Add(ctx, int64(len(root.RowsRoots)))
+	ins.squareSize.Record(
+		ctx,
+		int64(len(root.RowsRoots)),
+		attribute.String("request-id", requestID),
+	)
 
 	// perform the actual request
 	share, err := ins.next.GetShare(ctx, root, row, col)
@@ -163,12 +164,26 @@ func (ins *instrumentedShareGetter) GetShare(ctx context.Context, root *share.Ro
 func (ins *instrumentedShareGetter) GetEDS(ctx context.Context, root *share.Root) (*rsmt2d.ExtendedDataSquare, error) {
 	// measure the EDS size
 	// this will track the EDS size for full nodes
-	ins.squareSize.Add(ctx, int64(len(root.RowsRoots)))
+	requestID, err := misc.RandString(5)
+	if err != nil {
+		return nil, err
+	}
+
+	ins.squareSize.Record(
+		ctx,
+		int64(len(root.RowsRoots)),
+		attribute.String("request-id", requestID),
+	)
+
 	return ins.next.GetEDS(ctx, root)
 }
 
 // // GetSharesByNamespace gets all shares from an EDS within the given namespace.
 // // Shares are returned in a row-by-row order if the namespace spans multiple rows.
-func (ins *instrumentedShareGetter) GetSharesByNamespace(ctx context.Context, root *share.Root, id namespace.ID) (share.NamespacedShares, error) {
+func (ins *instrumentedShareGetter) GetSharesByNamespace(
+	ctx context.Context,
+	root *share.Root,
+	id namespace.ID,
+) (share.NamespacedShares, error) {
 	return ins.next.GetSharesByNamespace(ctx, root, id)
 }

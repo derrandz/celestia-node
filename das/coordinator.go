@@ -5,13 +5,14 @@ import (
 	"sync"
 
 	"github.com/celestiaorg/celestia-node/header"
+	libhead "github.com/celestiaorg/celestia-node/libs/header"
 )
 
 // samplingCoordinator runs and coordinates sampling workers and updates current sampling state
 type samplingCoordinator struct {
 	concurrencyLimit int
 
-	getter   header.Getter
+	getter   libhead.Getter[*header.ExtendedHeader]
 	sampleFn sampleFn
 
 	state coordinatorState
@@ -37,7 +38,7 @@ type result struct {
 
 func newSamplingCoordinator(
 	params Parameters,
-	getter header.Getter,
+	getter libhead.Getter[*header.ExtendedHeader],
 	sample sampleFn,
 ) *samplingCoordinator {
 	return &samplingCoordinator{
@@ -54,6 +55,12 @@ func newSamplingCoordinator(
 
 func (sc *samplingCoordinator) run(ctx context.Context, cp checkpoint) {
 	sc.state.resumeFromCheckpoint(cp)
+
+	// the amount of sampled headers from the checkpoint
+	// is the point from which we should start sampling - 1
+	totalSampledFromCheckpoint := int64(cp.SampleFrom - 1)
+	sc.metrics.recordTotalSampled(ctx, totalSampledFromCheckpoint)
+
 	// resume workers
 	for _, wk := range cp.Workers {
 		sc.runWorker(ctx, sc.state.newJob(wk.From, wk.To))
@@ -75,6 +82,12 @@ func (sc *samplingCoordinator) run(ctx context.Context, cp checkpoint) {
 			}
 		case res := <-sc.resultCh:
 			sc.state.handleResult(res)
+
+			// totalSampledFromWorker is the amount of successfully
+			// sampled headers from the worker
+			totalSampledFromWorker := int64(res.To-res.From) - int64(len(res.failed))
+			sc.metrics.recordTotalSampled(ctx, totalSampledFromWorker)
+
 		case wg := <-sc.waitCh:
 			wg.Wait()
 		case <-ctx.Done():

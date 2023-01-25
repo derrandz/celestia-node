@@ -45,6 +45,7 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		fx.Invoke(header.WithMetrics),
 		fx.Invoke(state.WithMetrics),
 		fx.Invoke(fraud.WithMetrics),
+		fx.Invoke(p2p.WithMetrics),
 		fx.Invoke(WithNodeMetrics), // node's metrics
 	)
 
@@ -67,6 +68,10 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 	return opts
 }
 
+// WithBlackboxMetrics enables blackbox metrics for the node.
+// Blackbox metrics are metrics that are recorded for the node's components
+// through a proxy that records metrics for the node's components
+// on each method call.
 func WithBlackboxMetrics() fx.Option {
 	return fx.Options(
 		fx.Decorate(func(mod hdr.Module) hdr.Module {
@@ -77,23 +82,7 @@ func WithBlackboxMetrics() fx.Option {
 			}
 			return hdr
 		}),
-		fx.Decorate(func(mod shr.Module) shr.Module {
-			shr, err := shr.WithBlackBoxMetrics(mod)
-			if err != nil {
-				log.Warn("[WithBlackBoxMetrics] encountered error while providing share.Module:", err)
-				return mod
-			}
-			return shr
-		}),
-		fx.Decorate(func(mod shr.Module) shr.Module {
-			shr, err := shr.WithBlackBoxMetrics(mod)
-			if err != nil {
-				log.Warn("[WithBlackBoxMetrics] encountered error while providing share.Module:", err)
-				return mod
-			}
-			return shr
-		}),
-		// fx.Decorate(shr.WithBlackBoxShareServiceMetrics),
+		fx.Decorate(shr.WithBlackBoxMetrics),
 	)
 }
 

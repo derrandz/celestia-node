@@ -78,20 +78,28 @@ func (m *metrics) recordNodeUptime(ctx context.Context, interval time.Duration) 
 	}
 }
 
-// WithMetrics provide fx.Option to enable metrics for the node.
-func WithNodeMetrics() fx.Option {
-	return fx.Options(
-		fx.Provide(
-			fx.Annotate(
-				newNodeMetrics,
-				fx.OnStart(func(startCtx, ctx context.Context, node *Node, m *metrics, cfg *Config) {
-					node.metrics = m
-					node.metrics.recordNodeStart(ctx)
+// WithNodeMetrics returns a function that initializes the node metrics
+// and registers onStart fx hook to record the node uptime and register
+// a callback that records the total node uptime every other `NodeUptimeScrapeInterval`
+// see `nodebuilder/telemetry/config.go`.
+func WithNodeMetrics(lifecycleFunc fx.Lifecycle, node *Node, cfg *Config) {
+	m, err := newNodeMetrics()
+	if err != nil {
+		panic(err)
+	}
 
-					interval := time.Duration(cfg.Telemetry.NodeUptimeScrapeInterval) * time.Minute
-					go node.metrics.recordNodeUptime(ctx, interval)
-				}),
-			),
-		),
+	node.metrics = m
+
+	lifecycleFunc.Append(
+		fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				node.metrics.recordNodeStart(context.Background())
+
+				interval := time.Duration(cfg.Telemetry.NodeUptimeScrapeInterval) * time.Minute
+				go node.metrics.recordNodeUptime(context.Background(), interval)
+
+				return nil
+			},
+		},
 	)
 }
