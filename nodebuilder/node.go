@@ -64,6 +64,9 @@ type Node struct {
 	FraudServ  fraud.Module  // not optional
 	DASer      das.Module    // not optional
 
+	// metrics for node
+	metrics *metrics
+
 	// start and stop control ref internal fx.App lifecycle funcs to be called from Start and Stop
 	start, stop lifecycleFunc
 }
