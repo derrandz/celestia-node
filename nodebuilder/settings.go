@@ -43,6 +43,15 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		fx.Invoke(header.WithMetrics),
 		fx.Invoke(state.WithMetrics),
 		fx.Invoke(fraud.WithMetrics),
+		fx.Invoke(func(ctx context.Context) error {
+			m, err := node.NewUptimeMetrics()
+			if err != nil {
+				return err
+			}
+			m.RecordNodeStartTime(ctx)
+
+			return nil
+		}),
 	)
 
 	var opts fx.Option
