@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/metric/global"
@@ -43,12 +44,15 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		fx.Invoke(header.WithMetrics),
 		fx.Invoke(state.WithMetrics),
 		fx.Invoke(fraud.WithMetrics),
-		fx.Invoke(func(ctx context.Context) error {
-			m, err := node.NewUptimeMetrics()
+		fx.Invoke(func(ctx context.Context, ds datastore.Datastore) error {
+			m, err := node.NewUptimeMetrics(ds)
 			if err != nil {
 				return err
 			}
-			m.RecordNodeStartTime(ctx)
+			err = m.RecordNodeStartTime(ctx)
+			if err != nil {
+				return err
+			}
 
 			return nil
 		}),
