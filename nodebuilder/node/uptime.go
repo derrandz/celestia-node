@@ -15,8 +15,9 @@ import (
 )
 
 // UptimeMetrics is a struct that records
-// 1. node start time: the timestamp when the node was started
-// 2. node up time: total time the node has been running
+//
+//  1. node start time: the timestamp when the node was started
+//  2. node up time: total time the node has been running counted in units of 1 second
 //
 // the node start time is recorded imperatively when RecordNodeStartTime is called
 // whereas the node up time is recorded periodically
