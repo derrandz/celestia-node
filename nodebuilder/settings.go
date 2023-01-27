@@ -44,7 +44,7 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		fx.Invoke(header.WithMetrics),
 		fx.Invoke(state.WithMetrics),
 		fx.Invoke(fraud.WithMetrics),
-		fx.Invoke(func(ctx context.Context, ds datastore.Datastore) error {
+		fx.Invoke(func(ctx context.Context, ds datastore.Batching) error {
 			m, err := node.NewUptimeMetrics(ds)
 			if err != nil {
 				return err
