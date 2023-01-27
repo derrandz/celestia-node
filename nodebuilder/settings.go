@@ -23,9 +23,6 @@ import (
 	"github.com/celestiaorg/celestia-node/state"
 )
 
-// The re-metering period for optl callbacks
-const optlCollectPeriodInSeconds = 2
-
 // WithNetwork specifies the Network to which the Node should connect to.
 // WARNING: Use this option with caution and never run the Node with different networks over the
 // same persisted Store.
@@ -95,7 +92,7 @@ func initializeMetrics(
 			exp,
 		),
 		controller.WithExporter(exp),
-		controller.WithCollectPeriod(optlCollectPeriodInSeconds*time.Second),
+		controller.WithCollectPeriod(node.OptlCollectPeriodInSeconds*time.Second),
 		controller.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(fmt.Sprintf("Celestia-%s", nodeType.String())),

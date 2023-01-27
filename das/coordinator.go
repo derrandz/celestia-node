@@ -57,7 +57,7 @@ func (sc *samplingCoordinator) run(ctx context.Context, cp checkpoint) {
 	sc.state.resumeFromCheckpoint(cp)
 
 	// the amount of sampled headers from the last checkpoint
-	totalSampledFromCheckpoint := int64(cp.TotalSampled())
+	totalSampledFromCheckpoint := int64(cp.totalSampled())
 	sc.metrics.recordTotalSampled(ctx, totalSampledFromCheckpoint)
 
 	// resume workers
