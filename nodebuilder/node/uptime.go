@@ -4,11 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/celestiaorg/celestia-node/nodebuilder/constants"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument"
 	"go.opentelemetry.io/otel/metric/instrument/asyncfloat64"
 )
+
+// OptlCollectPeriodInSeconds is the metrics collection
+// period for the OpenTelemetry callbacks in seconds.
+const OptlCollectPeriodInSeconds = 2
 
 // UptimeMetrics is a struct that records
 //
@@ -69,7 +72,7 @@ func NewUptimeMetrics() (*UptimeMetrics, error) {
 			totalNodeRunTime,
 		},
 		func(ctx context.Context) {
-			m.totalNodeUpTimeTicks = m.totalNodeUpTimeTicks + constants.OptlCollectPeriodInSeconds
+			m.totalNodeUpTimeTicks = m.totalNodeUpTimeTicks + OptlCollectPeriodInSeconds
 			totalNodeRunTime.Observe(ctx, float64(m.totalNodeUpTimeTicks))
 		},
 	)
