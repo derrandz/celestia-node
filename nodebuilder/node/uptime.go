@@ -29,7 +29,7 @@ type UptimeMetrics struct {
 	totalNodeUptime asyncfloat64.Counter
 
 	// store is the datastore used to store the node uptime metrics.
-	store datastore.Datastore
+	store datastore.Batching
 }
 
 var (
@@ -40,7 +40,7 @@ var (
 
 // NewUptimeMetrics creates a new UptimeMetrics
 // and registers a callback to re-meter the totalNodeUptime metric.
-func NewUptimeMetrics(ds datastore.Datastore) (*UptimeMetrics, error) {
+func NewUptimeMetrics(ds datastore.Batching) (*UptimeMetrics, error) {
 	nodeStartTS, err := meter.
 		AsyncFloat64().
 		Gauge(
