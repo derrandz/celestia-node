@@ -28,6 +28,10 @@ type UptimeMetrics struct {
 	// totalNodeUptime is the total time the node has been running.
 	totalNodeUptime asyncfloat64.Counter
 
+	// totalNodeUpTimeTicks is the total time the node has been running
+	// counted in units of 1 second.
+	totalNodeUpTimeTicks int
+
 	// store is the datastore used to store the node uptime metrics.
 	store datastore.Batching
 }
@@ -62,9 +66,10 @@ func NewUptimeMetrics(ds datastore.Batching) (*UptimeMetrics, error) {
 	}
 
 	m := &UptimeMetrics{
-		nodeStartTS:     nodeStartTS,
-		totalNodeUptime: totalNodeUptime,
-		store:           namespace.Wrap(ds, storePrefix),
+		nodeStartTS:          nodeStartTS,
+		totalNodeUptime:      totalNodeUptime,
+		store:                namespace.Wrap(ds, storePrefix),
+		totalNodeUpTimeTicks: 1,
 	}
 
 	err = meter.RegisterCallback(
@@ -72,7 +77,8 @@ func NewUptimeMetrics(ds datastore.Batching) (*UptimeMetrics, error) {
 			totalNodeUptime,
 		},
 		func(ctx context.Context) {
-			totalNodeUptime.Observe(ctx, 1)
+			m.totalNodeUpTimeTicks++
+			totalNodeUptime.Observe(ctx, float64(m.totalNodeUpTimeTicks))
 		},
 	)
 	if err != nil {
