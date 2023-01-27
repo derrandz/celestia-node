@@ -16,8 +16,10 @@ import (
 	"github.com/celestiaorg/celestia-node/fraud"
 	"github.com/celestiaorg/celestia-node/header"
 	"github.com/celestiaorg/celestia-node/nodebuilder/das"
+	hdr "github.com/celestiaorg/celestia-node/nodebuilder/header"
 	"github.com/celestiaorg/celestia-node/nodebuilder/node"
 	"github.com/celestiaorg/celestia-node/nodebuilder/p2p"
+	shr "github.com/celestiaorg/celestia-node/nodebuilder/share"
 	"github.com/celestiaorg/celestia-node/state"
 )
 
@@ -41,6 +43,7 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		fx.Invoke(header.WithMetrics),
 		fx.Invoke(state.WithMetrics),
 		fx.Invoke(fraud.WithMetrics),
+		fx.Invoke(p2p.WithMetrics),
 	)
 
 	var opts fx.Option
@@ -60,6 +63,24 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		panic("invalid node type")
 	}
 	return opts
+}
+
+// WithBlackboxMetrics enables blackbox metrics for the node.
+// Blackbox metrics are metrics that are recorded for the node's components
+// through a proxy that records metrics for the node's components
+// on each method call.
+func WithBlackboxMetrics() fx.Option {
+	return fx.Options(
+		fx.Decorate(func(mod hdr.Module) hdr.Module {
+			hdr, err := hdr.WithBlackBoxMetrics(mod)
+			if err != nil {
+				log.Warn("[WithBlackBoxMetrics] encountered error while providing header.Module:", err)
+				return mod
+			}
+			return hdr
+		}),
+		fx.Decorate(shr.WithBlackBoxMetrics),
+	)
 }
 
 // initializeMetrics initializes the global meter provider.

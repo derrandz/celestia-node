@@ -45,10 +45,11 @@ func (la *ShareAvailability) Start(context.Context) error {
 	la.cancel = cancel
 
 	go la.disc.EnsurePeers(ctx)
+
 	return nil
 }
 
-func (la *ShareAvailability) Stop(context.Context) error {
+func (la *ShareAvailability) Stop(ctx context.Context) error {
 	la.cancel()
 	return nil
 }
@@ -74,8 +75,8 @@ func (la *ShareAvailability) SharesAvailable(ctx context.Context, dah *share.Roo
 	ctx = getters.WithSession(ctx)
 	ctx, cancel := context.WithTimeout(ctx, share.AvailabilityTimeout)
 	defer cancel()
-
 	log.Debugw("starting sampling session", "root", dah.Hash())
+
 	errs := make(chan error, len(samples))
 	for _, s := range samples {
 		go func(s Sample) {
