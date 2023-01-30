@@ -97,6 +97,8 @@ func (w *worker) run(
 				"data root", h.DAH.Hash(),
 				"finished (s)", time.Since(startSample),
 			)
+
+			metrics.recordTotalSampled(ctx, 1)
 		}
 	}
 
@@ -110,8 +112,6 @@ func (w *worker) run(
 			jobTime.Seconds(),
 		)
 	}
-
-	metrics.recordTotalSampled(ctx, int64(w.state.job.To-w.state.job.From)-int64(len(w.state.failed)))
 
 	select {
 	case resultCh <- result{
