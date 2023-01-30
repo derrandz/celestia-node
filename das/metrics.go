@@ -172,6 +172,5 @@ func (m *metrics) recordTotalSampled(ctx context.Context, n int64) {
 	if m == nil {
 		return
 	}
-	totalSampledInt := atomic.LoadInt64(&m.totalSampledInt)
-	atomic.StoreInt64(&m.totalSampledInt, totalSampledInt+n)
+	atomic.AddInt64(&m.totalSampledInt, n)
 }
