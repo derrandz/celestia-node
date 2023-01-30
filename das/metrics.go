@@ -134,7 +134,13 @@ func (d *DASer) InitMetrics() error {
 
 // observeSample records the time it took to sample a header +
 // the amount of sampled contiguous headers
-func (m *metrics) observeSample(ctx context.Context, h *header.ExtendedHeader, sampleTime time.Duration, err error) {
+func (m *metrics) observeSample(
+	ctx context.Context,
+	h *header.ExtendedHeader,
+	sampleTime time.Duration,
+	totalSampledFromWorker int64,
+	err error,
+) {
 	if m == nil {
 		return
 	}
@@ -149,6 +155,7 @@ func (m *metrics) observeSample(ctx context.Context, h *header.ExtendedHeader, s
 	)
 
 	atomic.StoreInt64(&m.lastSampledTS, time.Now().UTC().Unix())
+	atomic.AddInt64(&m.totalSampledInt, totalSampledFromWorker)
 }
 
 // observeGetHeader records the time it took to get a header from the header store.
@@ -167,11 +174,10 @@ func (m *metrics) observeNewHead(ctx context.Context) {
 	m.newHead.Add(ctx, 1)
 }
 
-// recordTotalSampled records the total amount of sampled headers.
-func (m *metrics) recordTotalSampled(ctx context.Context, n int64) {
+// recordTotalSampled records the total sampled headers.
+func (m *metrics) recordTotalSampled(ctx context.Context, totalSampled int64) {
 	if m == nil {
 		return
 	}
-	totalSampledInt := atomic.LoadInt64(&m.totalSampledInt)
-	atomic.StoreInt64(&m.totalSampledInt, totalSampledInt+n)
+	atomic.AddInt64(&m.totalSampledInt, totalSampled)
 }

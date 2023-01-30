@@ -70,7 +70,13 @@ func (w *worker) run(
 			break
 		}
 		w.setResult(curr, err)
-		metrics.observeSample(ctx, h, time.Since(startSample), err)
+		metrics.observeSample(
+			ctx,
+			h,
+			time.Since(startSample),
+			int64(w.state.job.To-w.state.job.From)-int64(len(w.state.failed)), // total sampled
+			err,
+		)
 		if err != nil {
 			log.Debugw("failed to sampled header", "height", h.Height(), "hash", h.Hash(),
 				"square width", len(h.DAH.RowsRoots), "data root", h.DAH.Hash(), "err", err)

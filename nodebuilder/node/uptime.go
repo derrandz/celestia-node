@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"go.opentelemetry.io/otel/metric/global"
@@ -28,9 +29,8 @@ type UptimeMetrics struct {
 	// totalNodeRunTime is the total time the node has been running.
 	totalNodeRunTime asyncfloat64.Counter
 
-	// totalNodeUpTimeTicks is the total time the node has been running
-	// counted in units of `optlCollectPeriodInSeconds`
-	totalNodeUpTimeTicks int
+	// totalNodeUpTimeTicks is the total time the node has been running in seconds
+	totalNodeUpTimeInSeconds int64
 }
 
 var (
@@ -62,9 +62,8 @@ func NewUptimeMetrics() (*UptimeMetrics, error) {
 	}
 
 	m := &UptimeMetrics{
-		nodeStartTS:          nodeStartTS,
-		totalNodeRunTime:     totalNodeRunTime,
-		totalNodeUpTimeTicks: 1,
+		nodeStartTS:      nodeStartTS,
+		totalNodeRunTime: totalNodeRunTime,
 	}
 
 	err = meter.RegisterCallback(
@@ -72,8 +71,13 @@ func NewUptimeMetrics() (*UptimeMetrics, error) {
 			totalNodeRunTime,
 		},
 		func(ctx context.Context) {
-			m.totalNodeUpTimeTicks = m.totalNodeUpTimeTicks + OptlCollectPeriodInSeconds
-			totalNodeRunTime.Observe(ctx, float64(m.totalNodeUpTimeTicks))
+			now := time.Now().UTC().Unix()
+			old := atomic.SwapInt64(&m.totalNodeUpTimeInSeconds, now)
+
+			totalNodeRunTime.Observe(
+				ctx,
+				time.Since(time.Unix(old, 0).UTC()).Seconds(),
+			)
 		},
 	)
 	if err != nil {
