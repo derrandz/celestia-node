@@ -138,7 +138,6 @@ func (m *metrics) observeSample(
 	ctx context.Context,
 	h *header.ExtendedHeader,
 	sampleTime time.Duration,
-	totalSampledFromWorker int64,
 	err error,
 ) {
 	if m == nil {
@@ -155,7 +154,6 @@ func (m *metrics) observeSample(
 	)
 
 	atomic.StoreInt64(&m.lastSampledTS, time.Now().UTC().Unix())
-	atomic.AddInt64(&m.totalSampledInt, totalSampledFromWorker)
 }
 
 // observeGetHeader records the time it took to get a header from the header store.

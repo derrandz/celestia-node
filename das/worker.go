@@ -60,8 +60,16 @@ func (w *worker) run(
 		}
 
 		metrics.observeGetHeader(ctx, time.Since(startGet))
-		log.Debugw("got header from header store", "height", h.Height(), "hash", h.Hash(),
-			"square width", len(h.DAH.RowsRoots), "data root", h.DAH.Hash(), "finished (s)", time.Since(startGet))
+
+		// TODO(@team): find linter rule to enforce this
+		log.Debugw(
+			"got header from header store",
+			"height", h.Height(),
+			"hash", h.Hash(),
+			"square width", len(h.DAH.RowsRoots),
+			"data root", h.DAH.Hash(),
+			"finished (s)", time.Since(startGet),
+		)
 
 		startSample := time.Now()
 		err = sample(ctx, h)
@@ -70,27 +78,40 @@ func (w *worker) run(
 			break
 		}
 		w.setResult(curr, err)
-		metrics.observeSample(
-			ctx,
-			h,
-			time.Since(startSample),
-			int64(w.state.job.To-w.state.job.From)-int64(len(w.state.failed)), // total sampled
-			err,
-		)
+		metrics.observeSample(ctx, h, time.Since(startSample), err)
 		if err != nil {
-			log.Debugw("failed to sampled header", "height", h.Height(), "hash", h.Hash(),
-				"square width", len(h.DAH.RowsRoots), "data root", h.DAH.Hash(), "err", err)
+			log.Debugw(
+				"failed to sampled header",
+				"height", h.Height(),
+				"hash", h.Hash(),
+				"square width", len(h.DAH.RowsRoots),
+				"data root", h.DAH.Hash(),
+				"err", err,
+			)
 		} else {
-			log.Debugw("sampled header", "height", h.Height(), "hash", h.Hash(),
-				"square width", len(h.DAH.RowsRoots), "data root", h.DAH.Hash(), "finished (s)", time.Since(startSample))
+			log.Debugw(
+				"sampled header",
+				"height", h.Height(),
+				"hash", h.Hash(),
+				"square width", len(h.DAH.RowsRoots),
+				"data root", h.DAH.Hash(),
+				"finished (s)", time.Since(startSample),
+			)
 		}
 	}
 
 	if w.state.Curr > w.state.From {
 		jobTime := time.Since(jobStart)
-		log.Infow("sampled headers", "from", w.state.From, "to", w.state.Curr,
-			"finished (s)", jobTime.Seconds())
+		log.Infow(
+			"sampled headers",
+			"from", w.state.From,
+			"to", w.state.Curr,
+			"finished (s)",
+			jobTime.Seconds(),
+		)
 	}
+
+	metrics.recordTotalSampled(ctx, int64(w.state.job.To-w.state.job.From)-int64(len(w.state.failed)))
 
 	select {
 	case resultCh <- result{
