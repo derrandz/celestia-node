@@ -23,10 +23,6 @@ import (
 	"github.com/celestiaorg/celestia-node/state"
 )
 
-// OptlCollectPeriodInSeconds is the metrics collection
-// period for the OpenTelemetry callbacks in seconds.
-const OptlCollectPeriodInSeconds = 2
-
 // WithNetwork specifies the Network to which the Node should connect to.
 // WARNING: Use this option with caution and never run the Node with different networks over the
 // same persisted Store.
@@ -47,15 +43,7 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		fx.Invoke(header.WithMetrics),
 		fx.Invoke(state.WithMetrics),
 		fx.Invoke(fraud.WithMetrics),
-		fx.Invoke(func(ctx context.Context) error {
-			m, err := node.NewUptimeMetrics()
-			if err != nil {
-				return err
-			}
-			m.RecordNodeStartTime(ctx)
-
-			return nil
-		}),
+		fx.Invoke(node.WithMetrics),
 	)
 
 	var opts fx.Option
@@ -96,7 +84,7 @@ func initializeMetrics(
 			exp,
 		),
 		controller.WithExporter(exp),
-		controller.WithCollectPeriod(OptlCollectPeriodInSeconds*time.Second),
+		controller.WithCollectPeriod(2*time.Second),
 		controller.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(fmt.Sprintf("Celestia-%s", nodeType.String())),
