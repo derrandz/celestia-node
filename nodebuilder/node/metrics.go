@@ -39,14 +39,17 @@ func WithMetrics() {
 		log.Fatal(err)
 	}
 
-	// Observe node start timestamp
-	nodeStartTS.Observe(context.Background(), float64(time.Now().UTC().Unix()))
-
-	// Observe total node run time
-	var totalNodeUpTimeInSeconds int64
+	var started bool = false
+	var totalNodeUpTimeInSeconds int64 // Observe total node run time
 	err = meter.RegisterCallback(
 		[]instrument.Asynchronous{totalNodeRunTime},
 		func(ctx context.Context) {
+			if !started {
+				// Observe node start timestamp
+				nodeStartTS.Observe(context.Background(), float64(time.Now().UTC().Unix()))
+				started = true
+			}
+
 			now := time.Now().Unix()
 			last := atomic.SwapInt64(&totalNodeUpTimeInSeconds, now)
 
