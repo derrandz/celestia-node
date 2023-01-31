@@ -154,6 +154,10 @@ func (m *metrics) observeSample(
 	)
 
 	atomic.StoreInt64(&m.lastSampledTS, time.Now().UTC().Unix())
+
+	if err == nil {
+		atomic.AddInt64(&m.totalSampledInt, 1)
+	}
 }
 
 // observeGetHeader records the time it took to get a header from the header store.
@@ -173,9 +177,9 @@ func (m *metrics) observeNewHead(ctx context.Context) {
 }
 
 // recordTotalSampled records the total sampled headers.
-func (m *metrics) recordTotalSampled(ctx context.Context, totalSampled int64) {
+func (m *metrics) recordTotalSampled(ctx context.Context, totalSampled int) {
 	if m == nil {
 		return
 	}
-	atomic.AddInt64(&m.totalSampledInt, totalSampled)
+	atomic.StoreInt64(&m.totalSampledInt, int64(totalSampled))
 }

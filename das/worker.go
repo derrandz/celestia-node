@@ -97,8 +97,6 @@ func (w *worker) run(
 				"data root", h.DAH.Hash(),
 				"finished (s)", time.Since(startSample),
 			)
-
-			metrics.recordTotalSampled(ctx, 1)
 		}
 	}
 
