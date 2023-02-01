@@ -83,7 +83,7 @@ func (d *DASer) InitMetrics() error {
 	totalSampled, err := meter.
 		AsyncInt64().
 		Gauge(
-			"das_total_sampled_headers_gauge",
+			"das_total_sampled_headers",
 			instrument.WithDescription("total sampled headers gauge"),
 		)
 	if err != nil {
