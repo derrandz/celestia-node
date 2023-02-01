@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -47,11 +48,12 @@ func WithMetrics() error {
 	)
 
 	err = Meter.RegisterCallback(
-		[]instrument.Asynchronous{totalNodeRunTime},
+		[]instrument.Asynchronous{nodeStartTS, totalNodeRunTime},
 		func(ctx context.Context) {
+			fmt.Println("I wanna see you fire up!")
 			if !started {
 				// Observe node start timestamp
-				nodeStartTS.Observe(context.Background(), float64(time.Now().UTC().Unix()))
+				nodeStartTS.Observe(ctx, float64(time.Now().UTC().Unix()))
 				started = true
 			}
 
