@@ -57,10 +57,10 @@ func TestLifecycle(t *testing.T) {
 }
 
 func TestLifecycle_WithMetrics(t *testing.T) {
-	url, close := StartMockOtelCollectorHttpServer(t)
+	url, close := StartMockOtelCollectorHTTPServer(t)
 	defer close()
 
-	otelCollectorUrl := strings.ReplaceAll(url, "http://", "")
+	otelCollectorURL := strings.ReplaceAll(url, "http://", "")
 
 	var test = []struct {
 		tp           node.Type
@@ -78,7 +78,7 @@ func TestLifecycle_WithMetrics(t *testing.T) {
 				tt.tp,
 				WithMetrics(
 					[]otlpmetrichttp.Option{
-						otlpmetrichttp.WithEndpoint(otelCollectorUrl),
+						otlpmetrichttp.WithEndpoint(otelCollectorURL),
 						otlpmetrichttp.WithInsecure(),
 					},
 					tt.tp,
@@ -109,7 +109,7 @@ func TestLifecycle_WithMetrics(t *testing.T) {
 	}
 }
 
-func StartMockOtelCollectorHttpServer(t *testing.T) (string, func()) {
+func StartMockOtelCollectorHTTPServer(t *testing.T) (string, func()) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/metrics" && r.Method != http.MethodPost {
 			t.Errorf("Expected to request [POST] '/fixedvalue', got: [%s] %s", r.Method, r.URL.Path)
@@ -127,7 +127,7 @@ func StartMockOtelCollectorHttpServer(t *testing.T) (string, func()) {
 		log.Debug("Responding to optl POST request")
 		w.Header().Set("Content-Type", contentType)
 		w.WriteHeader(status)
-		w.Write(rawResponse)
+		_, _ = w.Write(rawResponse)
 
 		log.Debug("Responded to optl POST request")
 	}))
