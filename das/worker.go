@@ -61,7 +61,6 @@ func (w *worker) run(
 
 		metrics.observeGetHeader(ctx, time.Since(startGet))
 
-		// TODO(@team): find linter rule to enforce this
 		log.Debugw(
 			"got header from header store",
 			"height", h.Height(),

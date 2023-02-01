@@ -17,7 +17,7 @@ var (
 )
 
 // WithMetrics registers node metrics.
-func WithMetrics() {
+func WithMetrics() error {
 	nodeStartTS, err := meter.
 		AsyncFloat64().
 		Gauge(
@@ -25,7 +25,8 @@ func WithMetrics() {
 			instrument.WithDescription("timestamp when the node was started"),
 		)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return err
 	}
 
 	totalNodeRunTime, err := meter.
@@ -36,11 +37,15 @@ func WithMetrics() {
 			instrument.WithUnit("seconds"),
 		)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return err
 	}
 
-	var started bool = false
-	var totalNodeUpTimeInSeconds int64 // Observe total node run time
+	var (
+		started                  = false
+		totalNodeUpTimeInSeconds int64 // Observe total node run time
+	)
+
 	err = meter.RegisterCallback(
 		[]instrument.Asynchronous{totalNodeRunTime},
 		func(ctx context.Context) {
@@ -57,6 +62,9 @@ func WithMetrics() {
 		},
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return err
 	}
+
+	return nil
 }

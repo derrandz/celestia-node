@@ -177,7 +177,7 @@ func (m *metrics) observeNewHead(ctx context.Context) {
 }
 
 // recordTotalSampled records the total sampled headers.
-func (m *metrics) recordTotalSampled(ctx context.Context, totalSampled int) {
+func (m *metrics) recordTotalSampled(totalSampled int) {
 	if m == nil {
 		return
 	}
