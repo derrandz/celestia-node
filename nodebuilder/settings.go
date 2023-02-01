@@ -21,9 +21,6 @@ import (
 	"github.com/celestiaorg/celestia-node/state"
 )
 
-// The re-metering period for optl callbacks
-const optlCollectPeriodInSeconds = 2
-
 // WithNetwork specifies the Network to which the Node should connect to.
 // WARNING: Use this option with caution and never run the Node with different networks over the
 // same persisted Store.
@@ -44,15 +41,7 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		fx.Invoke(header.WithMetrics),
 		fx.Invoke(state.WithMetrics),
 		fx.Invoke(fraud.WithMetrics),
-		fx.Invoke(func(ctx context.Context) error {
-			m, err := node.NewUptimeMetrics()
-			if err != nil {
-				return err
-			}
-			m.RecordNodeStartTime(ctx)
-
-			return nil
-		}),
+		fx.Invoke(node.WithMetrics),
 	)
 
 	var opts fx.Option
@@ -88,13 +77,6 @@ func initializeMetrics(
 	}
 
 	provider := metric.NewMeterProvider(
-		// metric.WithView(metric.NewView(
-		// 	metric.Instrument{Kind: metric.InstrumentKindSyncHistogram},
-		// 	metric.Stream{
-		// 		Name:        "celestia.metrics",
-		// 		Aggregation: exp.Aggregation(metric.InstrumentKindSyncHistogram),
-		// 	},
-		// )),
 		metric.WithReader(metric.NewPeriodicReader(exp, metric.WithTimeout(2*time.Second))),
 		metric.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
