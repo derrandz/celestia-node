@@ -2,11 +2,18 @@ package nodebuilder
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+
+	collectormetricpb "go.opentelemetry.io/proto/otlp/collector/metrics/v1"
+	"google.golang.org/protobuf/proto"
+
+	"strings"
 
 	"github.com/celestiaorg/celestia-node/nodebuilder/node"
 )
@@ -50,6 +57,11 @@ func TestLifecycle(t *testing.T) {
 }
 
 func TestLifecycle_WithMetrics(t *testing.T) {
+	url, close := StartMockOtelCollectorHttpServer(t)
+	defer close()
+
+	otelCollectorUrl := strings.ReplaceAll(url, "http://", "")
+
 	var test = []struct {
 		tp           node.Type
 		coreExpected bool
@@ -66,7 +78,7 @@ func TestLifecycle_WithMetrics(t *testing.T) {
 				tt.tp,
 				WithMetrics(
 					[]otlpmetrichttp.Option{
-						otlpmetrichttp.WithEndpoint("localhost:4318"),
+						otlpmetrichttp.WithEndpoint(otelCollectorUrl),
 						otlpmetrichttp.WithInsecure(),
 					},
 					tt.tp,
@@ -95,4 +107,31 @@ func TestLifecycle_WithMetrics(t *testing.T) {
 			require.True(t, node.StateServ.IsStopped(ctx))
 		})
 	}
+}
+
+func StartMockOtelCollectorHttpServer(t *testing.T) (string, func()) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/metrics" && r.Method != http.MethodPost {
+			t.Errorf("Expected to request [POST] '/fixedvalue', got: [%s] %s", r.Method, r.URL.Path)
+		}
+
+		if r.Header.Get("Content-Type") != "application/x-protobuf" {
+			t.Errorf("Expected Content-Type: application/x-protobuf header, got: %s", r.Header.Get("Content-Type"))
+		}
+
+		response := collectormetricpb.ExportMetricsServiceResponse{}
+		rawResponse, _ := proto.Marshal(&response)
+		contentType := "application/x-protobuf"
+		status := http.StatusOK
+
+		log.Debug("Responding to optl POST request")
+		w.Header().Set("Content-Type", contentType)
+		w.WriteHeader(status)
+		w.Write(rawResponse)
+
+		log.Debug("Responded to optl POST request")
+	}))
+
+	server.EnableHTTP2 = true
+	return server.URL, server.Close
 }
