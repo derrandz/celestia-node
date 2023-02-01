@@ -43,7 +43,7 @@ func WithMetrics() error {
 
 	var (
 		started                  = false
-		totalNodeUpTimeInSeconds int64 // Observe total node run time
+		totalNodeUpTimeInSeconds = time.Now().Unix()
 	)
 
 	err = Meter.RegisterCallback(
