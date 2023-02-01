@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	meter = global.MeterProvider().Meter("node")
+	Meter = global.MeterProvider().Meter("node")
 	log   = logging.Logger("node")
 )
 
 // WithMetrics registers node metrics.
 func WithMetrics() error {
-	nodeStartTS, err := meter.
+	nodeStartTS, err := Meter.
 		AsyncFloat64().
 		Gauge(
 			"node_start_ts",
@@ -29,7 +29,7 @@ func WithMetrics() error {
 		return err
 	}
 
-	totalNodeRunTime, err := meter.
+	totalNodeRunTime, err := Meter.
 		AsyncFloat64().
 		Counter(
 			"node_runtime_counter_in_seconds",
@@ -46,7 +46,7 @@ func WithMetrics() error {
 		totalNodeUpTimeInSeconds int64 // Observe total node run time
 	)
 
-	err = meter.RegisterCallback(
+	err = Meter.RegisterCallback(
 		[]instrument.Asynchronous{totalNodeRunTime},
 		func(ctx context.Context) {
 			if !started {
