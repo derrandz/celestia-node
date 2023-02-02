@@ -83,7 +83,7 @@ func (d *DASer) InitMetrics() error {
 	totalSampled, err := meter.
 		AsyncInt64().
 		Gauge(
-			"das_total_sampled_headers_gauge",
+			"das_total_sampled_headers",
 			instrument.WithDescription("total sampled headers gauge"),
 		)
 	if err != nil {
@@ -177,7 +177,7 @@ func (m *metrics) observeNewHead(ctx context.Context) {
 }
 
 // recordTotalSampled records the total sampled headers.
-func (m *metrics) recordTotalSampled(ctx context.Context, totalSampled int) {
+func (m *metrics) recordTotalSampled(totalSampled int) {
 	if m == nil {
 		return
 	}

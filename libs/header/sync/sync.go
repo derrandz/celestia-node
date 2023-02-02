@@ -51,6 +51,8 @@ type Syncer[H header.Header] struct {
 	cancel context.CancelFunc
 
 	Params *Parameters
+
+	metrics *metrics
 }
 
 // NewSyncer creates a new instance of Syncer.
@@ -205,10 +207,13 @@ func (s *Syncer[H]) sync(ctx context.Context) {
 		return
 	}
 
-	log.Infow("finished syncing",
+	log.Infow(
+		"finished syncing",
 		"from", head.Height(),
 		"to", newHead.Height(),
-		"elapsed time", s.state.End.Sub(s.state.Start))
+		"elapsed time",
+		s.state.End.Sub(s.state.Start),
+	)
 }
 
 // doSync performs actual syncing updating the internal State
@@ -229,6 +234,7 @@ func (s *Syncer[H]) doSync(ctx context.Context, fromHead, toHead H) (err error) 
 		if err != nil && processed == 0 {
 			break
 		}
+		s.metrics.recordTotalSynced(1)
 	}
 
 	s.stateLk.Lock()

@@ -17,7 +17,7 @@ var (
 )
 
 // WithMetrics registers node metrics.
-func WithMetrics() {
+func WithMetrics() error {
 	nodeStartTS, err := meter.
 		AsyncFloat64().
 		Gauge(
@@ -25,7 +25,8 @@ func WithMetrics() {
 			instrument.WithDescription("timestamp when the node was started"),
 		)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return err
 	}
 
 	totalNodeRunTime, err := meter.
@@ -33,27 +34,36 @@ func WithMetrics() {
 		Counter(
 			"node_runtime_counter_in_seconds",
 			instrument.WithDescription("total time the node has been running"),
-			instrument.WithUnit("seconds"),
 		)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return err
 	}
 
-	// Observe node start timestamp
-	nodeStartTS.Observe(context.Background(), float64(time.Now().UTC().Unix()))
+	var (
+		started                  = false
+		totalNodeUpTimeInSeconds = time.Now().Unix()
+	)
 
-	// Observe total node run time
-	var totalNodeUpTimeInSeconds int64
 	err = meter.RegisterCallback(
-		[]instrument.Asynchronous{totalNodeRunTime},
+		[]instrument.Asynchronous{nodeStartTS, totalNodeRunTime},
 		func(ctx context.Context) {
+			if !started {
+				// Observe node start timestamp
+				nodeStartTS.Observe(ctx, float64(time.Now().UTC().Unix()))
+				started = true
+			}
+
 			now := time.Now().Unix()
 			last := atomic.SwapInt64(&totalNodeUpTimeInSeconds, now)
 
-			totalNodeRunTime.Observe(ctx, float64(now-last))
+			totalNodeRunTime.Observe(ctx, time.Duration(now-last).Seconds())
 		},
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return err
 	}
+
+	return nil
 }
