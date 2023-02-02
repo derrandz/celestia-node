@@ -34,7 +34,6 @@ func WithMetrics() error {
 		Counter(
 			"node_runtime_counter_in_seconds",
 			instrument.WithDescription("total time the node has been running"),
-			instrument.WithUnit("seconds"),
 		)
 	if err != nil {
 		log.Error(err)
@@ -58,7 +57,7 @@ func WithMetrics() error {
 			now := time.Now().Unix()
 			last := atomic.SwapInt64(&totalNodeUpTimeInSeconds, now)
 
-			totalNodeRunTime.Observe(ctx, float64(now-last))
+			totalNodeRunTime.Observe(ctx, time.Duration(now-last).Seconds())
 		},
 	)
 	if err != nil {
