@@ -17,6 +17,7 @@ type metrics struct {
 }
 
 func (s *Syncer[H]) InitMetrics() error {
+	log.Debug("Initializing syncer metrics")
 	totalSynced, err := meter.
 		AsyncFloat64().
 		Gauge(
@@ -35,7 +36,6 @@ func (s *Syncer[H]) InitMetrics() error {
 			totalSynced.Observe(ctx, float64(atomic.LoadInt64(&s.metrics.totalSynced)))
 		},
 	)
-
 	if err != nil {
 		return err
 	}
