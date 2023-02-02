@@ -2,7 +2,6 @@ package node
 
 import (
 	"context"
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -13,13 +12,13 @@ import (
 )
 
 var (
-	Meter = global.MeterProvider().Meter("node")
+	meter = global.MeterProvider().Meter("node")
 	log   = logging.Logger("node")
 )
 
 // WithMetrics registers node metrics.
 func WithMetrics() error {
-	nodeStartTS, err := Meter.
+	nodeStartTS, err := meter.
 		AsyncFloat64().
 		Gauge(
 			"node_start_ts",
@@ -30,7 +29,7 @@ func WithMetrics() error {
 		return err
 	}
 
-	totalNodeRunTime, err := Meter.
+	totalNodeRunTime, err := meter.
 		AsyncFloat64().
 		Counter(
 			"node_runtime_counter_in_seconds",
@@ -47,10 +46,9 @@ func WithMetrics() error {
 		totalNodeUpTimeInSeconds = time.Now().Unix()
 	)
 
-	err = Meter.RegisterCallback(
+	err = meter.RegisterCallback(
 		[]instrument.Asynchronous{nodeStartTS, totalNodeRunTime},
 		func(ctx context.Context) {
-			fmt.Println("I wanna see you fire up!")
 			if !started {
 				// Observe node start timestamp
 				nodeStartTS.Observe(ctx, float64(time.Now().UTC().Unix()))
