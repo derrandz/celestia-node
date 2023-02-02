@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/celestiaorg/celestia-node/share/availability/light"
-	"github.com/celestiaorg/celestia-node/share/getters"
 	"github.com/ipfs/go-datastore"
 	ds_sync "github.com/ipfs/go-datastore/sync"
 	mdutils "github.com/ipfs/go-merkledag/test"
@@ -15,13 +13,16 @@ import (
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
+
+	"github.com/celestiaorg/celestia-node/share/availability/light"
+	"github.com/celestiaorg/celestia-node/share/getters"
 )
 
 func TestMetrics_TotalSampled(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
 
-	daser, wait, err := NewTestDASer(t, ctx)
+	daser, _, err := NewTestDASer(ctx, t)
 	require.NoError(t, err)
 
 	provider, reader, err := TestingMeterProvider()
@@ -88,7 +89,7 @@ func TestingMeterProvider() (*metric.MeterProvider, metric.Reader, error) {
 	return provider, reader, nil
 }
 
-func NewTestDASer(t *testing.T, ctx context.Context) (*DASer, func(), error) {
+func NewTestDASer(ctx context.Context, t *testing.T) (*DASer, func(), error) {
 	ds := ds_sync.MutexWrap(datastore.NewMapDatastore())
 	bServ := mdutils.Bserv()
 	avail := light.TestAvailability(getters.NewIPLDGetter(bServ))

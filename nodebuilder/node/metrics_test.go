@@ -37,13 +37,13 @@ func TestWithMetrics(t *testing.T) {
 	assert.Equal(t, totalNodeRunTime.Name, "node_runtime_counter_in_seconds")
 
 	// retrieve metric values by casting them to their proper types
-	nodeStartTsCounter, _ := (nodeStartTS.Data).(metricdata.Gauge[float64])
+	nodeStartTSCounter, _ := (nodeStartTS.Data).(metricdata.Gauge[float64])
 	totalNodeRunTimeGauge, _ := (totalNodeRunTime.Data).(metricdata.Sum[float64])
 
 	// assert for correctness collected data
 	start := float64(time.Now().Unix())
 	assert.Equal(t, totalNodeRunTimeGauge.DataPoints[0].Value, 0.0)
-	assert.Equal(t, nodeStartTsCounter.DataPoints[0].Value, start)
+	assert.Equal(t, nodeStartTSCounter.DataPoints[0].Value, start)
 
 	// Recollect after 2 seconds
 	<-time.After(2 * time.Second)
@@ -57,7 +57,7 @@ func TestWithMetrics(t *testing.T) {
 	// that node_start_ts was not collected again
 	assert.Equal(t, 1, len(mr.ScopeMetrics[0].Metrics))
 
-	totalNodeRunTime = (metricdata.Metrics)(mr.ScopeMetrics[0].Metrics[0])
+	totalNodeRunTime = mr.ScopeMetrics[0].Metrics[0]
 	totalNodeRunTimeGauge, _ = (totalNodeRunTime.Data).(metricdata.Sum[float64])
 
 	// assert that the collected metrics were the right ones
