@@ -58,10 +58,11 @@ func TestWithMetrics(t *testing.T) {
 	assert.Equal(t, 1, len(mr.ScopeMetrics[0].Metrics))
 
 	totalNodeRunTime = (metricdata.Metrics)(mr.ScopeMetrics[0].Metrics[0])
-
-	assert.Equal(t, totalNodeRunTime.Name, "node_runtime_counter_in_seconds")
-
 	totalNodeRunTimeGauge, _ = (totalNodeRunTime.Data).(metricdata.Sum[float64])
+
+	// assert that the collected metrics were the right ones
+	assert.Equal(t, totalNodeRunTime.Name, "node_runtime_counter_in_seconds")
+	//  assert for correctness collected data
 	assert.Equal(t, totalNodeRunTimeGauge.DataPoints[0].Value, float64(time.Now().Unix()-int64(start)))
 }
 
