@@ -10,3 +10,7 @@ func WithBlackBoxMetrics(hs Module) (Module, error) {
 
 	return instrumentedHeaderServ, nil
 }
+
+func WithMetrics(hs *Service) error {
+	return hs.syncer.InitMetrics()
+}
