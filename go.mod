@@ -8,7 +8,7 @@ require (
 	cosmossdk.io/math v1.0.0-beta.3
 	github.com/BurntSushi/toml v1.2.1
 	github.com/alecthomas/jsonschema v0.0.0-20200530073317-71f438968921
-	github.com/celestiaorg/celestia-app v0.12.0-rc5
+	github.com/celestiaorg/celestia-app v0.12.0-rc6
 	github.com/celestiaorg/go-libp2p-messenger v0.1.0
 	github.com/celestiaorg/nmt v0.14.0
 	github.com/celestiaorg/rsmt2d v0.8.0
@@ -43,7 +43,7 @@ require (
 	github.com/ipld/go-car v0.5.0
 	github.com/libp2p/go-libp2p v0.24.1
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
-	github.com/libp2p/go-libp2p-pubsub v0.8.2
+	github.com/libp2p/go-libp2p-pubsub v0.8.3
 	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/libp2p/go-libp2p-routing-helpers v0.6.0
 	github.com/minio/sha256-simd v1.0.0
@@ -130,6 +130,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1-0.20200219035652-afde56e7acac // indirect
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/elastic/gosigar v0.14.2 // indirect
+	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/etclabscore/go-jsonschema-walk v0.0.6 // indirect
 	github.com/ethereum/go-ethereum v1.10.26 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
@@ -292,7 +293,6 @@ require (
 	github.com/whyrusleeping/cbor v0.0.0-20171005072247-63513f603b11 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20200123233031-1cdf64d27158 // indirect
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
-	github.com/whyrusleeping/timecache v0.0.0-20160911033111-cfcb2f1abfee // indirect
 	github.com/zondax/hid v0.9.1 // indirect
 	github.com/zondax/ledger-go v0.14.0 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
@@ -325,7 +325,7 @@ require (
 
 replace (
 	github.com/celestiaorg/utils => github.com/celestiaorg/utils v0.0.0-20230111201732-2d8b5f8774ad // uses an unmerged PR, delete when celestiaorg/utils PR#5 is merged
-	github.com/cosmos/cosmos-sdk => github.com/celestiaorg/cosmos-sdk v1.7.0-sdk-v0.46.7
+	github.com/cosmos/cosmos-sdk => github.com/celestiaorg/cosmos-sdk v1.8.0-sdk-v0.46.7
 	github.com/filecoin-project/dagstore => github.com/celestiaorg/dagstore v0.0.0-20221014072825-395797efb659
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/libp2p/go-libp2p => github.com/Wondertan/go-libp2p v0.5.3-0.20230126212817-d54022334dbe

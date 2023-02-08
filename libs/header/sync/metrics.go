@@ -8,15 +8,15 @@ import (
 	"go.opentelemetry.io/otel/metric/instrument"
 )
 
-var (
-	meter = global.MeterProvider().Meter("header/sync")
-)
+var meter = global.MeterProvider().Meter("header/sync")
 
 type metrics struct {
 	totalSynced int64
 }
 
 func (s *Syncer[H]) InitMetrics() error {
+	s.metrics = &metrics{}
+
 	totalSynced, err := meter.
 		AsyncFloat64().
 		Gauge(
@@ -27,7 +27,7 @@ func (s *Syncer[H]) InitMetrics() error {
 		return err
 	}
 
-	err = meter.RegisterCallback(
+	return meter.RegisterCallback(
 		[]instrument.Asynchronous{
 			totalSynced,
 		},
@@ -35,20 +35,9 @@ func (s *Syncer[H]) InitMetrics() error {
 			totalSynced.Observe(ctx, float64(atomic.LoadInt64(&s.metrics.totalSynced)))
 		},
 	)
-
-	if err != nil {
-		return err
-	}
-
-	s.metrics = &metrics{}
-
-	return nil
 }
 
-// recordTotalSampled records the total sampled headers.
-func (m *metrics) recordTotalSynced(totalSampled int) {
-	if m == nil {
-		return
-	}
-	atomic.AddInt64(&m.totalSynced, 1)
+// recordTotalSynced records the total amount of synced headers.
+func (m *metrics) recordTotalSynced(totalSynced int) {
+	atomic.AddInt64(&m.totalSynced, int64(totalSynced))
 }

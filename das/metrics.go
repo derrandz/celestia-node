@@ -25,10 +25,9 @@ type metrics struct {
 	sampleTime    syncfloat64.Histogram
 	getHeaderTime syncfloat64.Histogram
 	newHead       syncint64.Counter
-	totalSampled  asyncint64.Gauge
 
-	lastSampledTS   int64
-	totalSampledInt int64
+	lastSampledTS   uint64
+	totalSampledInt uint64
 }
 
 func (d *DASer) InitMetrics() error {
@@ -116,12 +115,12 @@ func (d *DASer) InitMetrics() error {
 			networkHead.Observe(ctx, int64(stats.NetworkHead))
 			sampledChainHead.Observe(ctx, int64(stats.SampledChainHead))
 
-			if ts := atomic.LoadInt64(&d.sampler.metrics.lastSampledTS); ts != 0 {
-				lastSampledTS.Observe(ctx, ts)
+			if ts := atomic.LoadUint64(&d.sampler.metrics.lastSampledTS); ts != 0 {
+				lastSampledTS.Observe(ctx, int64(ts))
 			}
 
-			totalSampledInt := atomic.LoadInt64(&d.sampler.metrics.totalSampledInt)
-			totalSampled.Observe(ctx, totalSampledInt)
+			totalSampledInt := atomic.LoadUint64(&d.sampler.metrics.totalSampledInt)
+			totalSampled.Observe(ctx, int64(totalSampledInt))
 		},
 	)
 
@@ -147,7 +146,6 @@ func (m *metrics) observeSample(
 	m.sampleTime.Record(ctx, sampleTime.Seconds(),
 		attribute.Bool("failed", err != nil),
 		attribute.Int("header_width", len(h.DAH.RowsRoots)),
-		attribute.Int("header", int(h.RawHeader.Height)),
 	)
 
 	m.sampled.Add(ctx, 1,
@@ -155,10 +153,10 @@ func (m *metrics) observeSample(
 		attribute.Int("header_width", len(h.DAH.RowsRoots)),
 	)
 
-	atomic.StoreInt64(&m.lastSampledTS, time.Now().UTC().Unix())
+	atomic.StoreUint64(&m.lastSampledTS, uint64(time.Now().UTC().Unix()))
 
 	if err == nil {
-		atomic.AddInt64(&m.totalSampledInt, 1)
+		atomic.AddUint64(&m.totalSampledInt, 1)
 	}
 }
 
@@ -179,9 +177,9 @@ func (m *metrics) observeNewHead(ctx context.Context) {
 }
 
 // recordTotalSampled records the total sampled headers.
-func (m *metrics) recordTotalSampled(totalSampled int) {
+func (m *metrics) recordTotalSampled(totalSampled uint64) {
 	if m == nil {
 		return
 	}
-	atomic.StoreInt64(&m.totalSampledInt, int64(totalSampled))
+	atomic.StoreUint64(&m.totalSampledInt, totalSampled)
 }
