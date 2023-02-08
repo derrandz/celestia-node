@@ -155,7 +155,7 @@ func ConstructModule(tp node.Type, cfg *Config, options ...fx.Option) fx.Option 
 	}
 }
 
-func peerManager(subscriber libhead.Subscriber[*header.ExtendedHeader],host host.Host, discovery *disc.Discovery) *peers.Manager {
+func peerManager(subscriber libhead.Subscriber[*header.ExtendedHeader], host host.Host, discovery *disc.Discovery) *peers.Manager {
 	// TODO: Replace modp2p.BlockTime?
 	return peers.NewManager(subscriber, host, discovery, modp2p.BlockTime)
 }
@@ -184,7 +184,7 @@ func fullGetter(
 		[]share.Getter{
 			getters.NewStoreGetter(store),
 			getters.NewTeeGetter(shrexGetter, store),
-			getters.NewTeeGetter(ipldGetter, store),
+			// getters.NewTeeGetter(ipldGetter, store),
 		},
 		// TODO: Replace modp2p.BlockTime?
 		modp2p.BlockTime,
