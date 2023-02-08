@@ -9,7 +9,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/instrument/asyncint64"
 	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 
@@ -94,7 +93,6 @@ func (d *DASer) InitMetrics() error {
 		sampleTime:    sampleTime,
 		getHeaderTime: getHeaderTime,
 		newHead:       newHead,
-		totalSampled:  totalSampled,
 	}
 
 	err = meter.RegisterCallback(
