@@ -81,14 +81,16 @@ func fullGetter(
 	store *eds.Store,
 	shrexGetter *getters.ShrexGetter,
 	ipldGetter *getters.IPLDGetter,
+	cfg *Config,
 ) share.Getter {
-	return getters.NewCascadeGetter(
-		[]share.Getter{
-			getters.NewStoreGetter(store),
-			getters.NewTeeGetter(shrexGetter, store),
-			getters.NewTeeGetter(ipldGetter, store),
-		},
-		// TODO: What constant should we use here?
-		modp2p.BlockTime,
-	)
+	gtrs := []share.Getter{
+		getters.NewStoreGetter(store),
+		getters.NewTeeGetter(shrexGetter, store),
+	}
+
+	if cfg.UseIPLDFallback {
+		gtrs = append(gtrs, getters.NewTeeGetter(ipldGetter, store))
+	}
+
+	return getters.NewCascadeGetter(gtrs, modp2p.BlockTime)
 }

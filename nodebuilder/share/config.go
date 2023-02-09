@@ -18,6 +18,9 @@ type Config struct {
 	// AdvertiseInterval is a interval between advertising sessions.
 	// NOTE: only full and bridge can advertise themselves.
 	AdvertiseInterval time.Duration
+
+	// Used to enable/disable the use of IPLD fallback for the retrieval of data.
+	UseIPLDFallback bool
 }
 
 func DefaultConfig() Config {
@@ -25,6 +28,7 @@ func DefaultConfig() Config {
 		PeersLimit:        3,
 		DiscoveryInterval: time.Second * 30,
 		AdvertiseInterval: time.Second * 30,
+		UseIPLDFallback:   true,
 	}
 }
 

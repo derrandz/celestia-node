@@ -58,6 +58,9 @@ func ConstructModule(tp node.Type, cfg *Config, options ...fx.Option) fx.Option 
 		return fx.Module(
 			"share",
 			baseComponents,
+			fx.Provide(func() *Config {
+				return cfg
+			}),
 			fx.Provide(getters.NewIPLDGetter),
 			fx.Invoke(func(srv *shrexeds.Server) {}),
 			fx.Provide(fx.Annotate(
