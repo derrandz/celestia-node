@@ -24,7 +24,10 @@ import (
 	"github.com/celestiaorg/celestia-node/share/p2p/shrexsub"
 
 	"github.com/celestiaorg/celestia-app/pkg/da"
+	logging "github.com/ipfs/go-log/v2"
 )
+
+var log = logging.Logger("nodebuilder/share")
 
 func discovery(cfg Config) func(routing.ContentRouting, host.Host) *disc.Discovery {
 	return func(
@@ -83,6 +86,23 @@ func fullGetter(
 	ipldGetter *getters.IPLDGetter,
 	cfg *Config,
 ) share.Getter {
+	if cfg.NoCascade {
+		switch cfg.DefaultGetter {
+		case "shrex":
+			return getters.NewTeeGetter(shrexGetter, store)
+		case "ipld":
+			return getters.NewTeeGetter(ipldGetter, store)
+		default:
+			log.Warn("nodebuilder/constructors: ",
+				"NoCascade is set, but no DefaultGetter is provided. Defaulting to shrex/ipld.")
+			return getters.NewCascadeGetter([]share.Getter{
+				getters.NewStoreGetter(store),
+				getters.NewTeeGetter(shrexGetter, store),
+				getters.NewTeeGetter(ipldGetter, store),
+			}, modp2p.BlockTime)
+		}
+	}
+
 	gtrs := []share.Getter{
 		getters.NewStoreGetter(store),
 		getters.NewTeeGetter(shrexGetter, store),
