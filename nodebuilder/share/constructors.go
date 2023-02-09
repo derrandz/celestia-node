@@ -86,27 +86,33 @@ func fullGetter(
 	ipldGetter *getters.IPLDGetter,
 	cfg *Config,
 ) share.Getter {
+	gtrs := []share.Getter{
+		getters.NewStoreGetter(store),
+	}
+
 	if cfg.NoCascade {
 		switch cfg.DefaultGetter {
 		case "shrex":
-			return getters.NewTeeGetter(shrexGetter, store)
+			return getters.NewCascadeGetter(
+				append(gtrs, getters.NewTeeGetter(shrexGetter, store)),
+				modp2p.BlockTime,
+			)
 		case "ipld":
-			return getters.NewTeeGetter(ipldGetter, store)
+			return getters.NewCascadeGetter(
+				append(gtrs, getters.NewTeeGetter(ipldGetter, store)),
+				modp2p.BlockTime,
+			)
 		default:
 			log.Warn("nodebuilder/constructors: ",
 				"NoCascade is set, but no DefaultGetter is provided. Defaulting to shrex/ipld.")
-			return getters.NewCascadeGetter([]share.Getter{
-				getters.NewStoreGetter(store),
-				getters.NewTeeGetter(shrexGetter, store),
-				getters.NewTeeGetter(ipldGetter, store),
-			}, modp2p.BlockTime)
+			return getters.NewCascadeGetter(
+				append(gtrs, getters.NewTeeGetter(shrexGetter, store), getters.NewTeeGetter(ipldGetter, store)),
+				modp2p.BlockTime,
+			)
 		}
 	}
 
-	gtrs := []share.Getter{
-		getters.NewStoreGetter(store),
-		getters.NewTeeGetter(shrexGetter, store),
-	}
+	gtrs = append(gtrs, getters.NewTeeGetter(shrexGetter, store))
 
 	if cfg.UseIPLDFallback {
 		gtrs = append(gtrs, getters.NewTeeGetter(ipldGetter, store))
