@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ipfs/go-datastore"
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p/core/host"
 	"go.uber.org/fx"
 
@@ -20,6 +21,10 @@ import (
 	"github.com/celestiaorg/celestia-node/share/p2p/shrexsub"
 )
 
+var (
+	log = logging.Logger("module/share")
+)
+
 func ConstructModule(tp node.Type, cfg *Config, options ...fx.Option) fx.Option {
 	// sanitize config values before constructing module
 	cfgErr := cfg.Validate()
@@ -29,13 +34,13 @@ func ConstructModule(tp node.Type, cfg *Config, options ...fx.Option) fx.Option 
 		fx.Error(cfgErr),
 		fx.Options(options...),
 		fx.Provide(discovery(*cfg)),
-		fx.Provide(newModule),
 		// TODO: Configure for light nodes
 		fx.Provide(
 			func(host host.Host, network modp2p.Network) (*shrexnd.Client, error) {
 				return shrexnd.NewClient(host, shrexnd.WithProtocolSuffix(string(network)))
 			},
 		),
+		fx.Provide(newModule),
 	)
 
 	switch tp {
