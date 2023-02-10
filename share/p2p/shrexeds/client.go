@@ -89,7 +89,7 @@ func (c *Client) doRequest(
 	req := &pb.EDSRequest{Hash: dataHash}
 
 	// request ODS
-	//log.Debugf("client: requesting ods %s from peer %s", dataHash.String(), to)
+	log.Debugf("client: requesting ods %s from peer %s", dataHash.String(), to)
 	_, err = serde.Write(stream, req)
 	if err != nil {
 		stream.Reset() //nolint:errcheck
