@@ -17,10 +17,10 @@ import (
 	headerPkg "github.com/celestiaorg/celestia-node/header"
 
 	"github.com/celestiaorg/celestia-node/nodebuilder/das"
-	hdr "github.com/celestiaorg/celestia-node/nodebuilder/header"
+	"github.com/celestiaorg/celestia-node/nodebuilder/header"
 	"github.com/celestiaorg/celestia-node/nodebuilder/node"
 	"github.com/celestiaorg/celestia-node/nodebuilder/p2p"
-	shr "github.com/celestiaorg/celestia-node/nodebuilder/share"
+	sharePkg "github.com/celestiaorg/celestia-node/nodebuilder/share"
 	"github.com/celestiaorg/celestia-node/state"
 )
 
@@ -73,15 +73,15 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 // on each method call.
 func WithBlackboxMetrics() fx.Option {
 	return fx.Options(
-		fx.Decorate(func(mod hdr.Module) hdr.Module {
-			hdr, err := hdr.WithBlackBoxMetrics(mod)
+		fx.Decorate(func(mod header.Module) header.Module {
+			headerMod, err := header.WithBlackBoxMetrics(mod)
 			if err != nil {
-				log.Warn("[WithBlackBoxMetrics] encountered error while providing header.Module:", err)
+				log.Warn("WithBlackBoxMetrics: providing header.Module:", err)
 				return mod
 			}
-			return hdr
+			return headerMod
 		}),
-		fx.Decorate(shr.WithBlackBoxMetrics),
+		fx.Decorate(sharePkg.WithBlackBoxMetrics),
 	)
 }
 
