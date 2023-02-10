@@ -159,9 +159,13 @@ func (s *Manager) Peer(
 	if ok {
 		// some pools could still have blacklisted peers in storage
 		if s.peerIsBlacklisted(peerID) {
+			log.Debugw("blacklisting bad shrex-sub peer", "hash", datahash.String(),
+				"peer", peerID.String())
 			p.remove(peerID)
 			return s.Peer(ctx, datahash)
 		}
+		log.Debugw("returning shrex-sub peer", "hash", datahash.String(),
+			"peer", peerID.String())
 		return peerID, s.doneFunc(datahash, peerID), nil
 	}
 
@@ -257,6 +261,7 @@ func (s *Manager) deletePool(datahash string) {
 
 func (s *Manager) blacklistPeers(peerIDs ...peer.ID) {
 	for _, peerID := range peerIDs {
+		log.Debugw("blacklisting peer", "peer", peerID.String())
 		s.fullNodes.remove(peerID)
 		// add peer to the blacklist, so we can't connect to it in the future.
 		err := s.connGater.BlockPeer(peerID)
@@ -272,7 +277,9 @@ func (s *Manager) blacklistPeers(peerIDs ...peer.ID) {
 }
 
 func (s *Manager) peerIsBlacklisted(peerID peer.ID) bool {
-	return !s.connGater.InterceptPeerDial(peerID)
+	blacklisted := s.connGater.InterceptPeerDial(peerID)
+	log.Debugw("checking if peer is blacklisted", "blacklisted", !blacklisted)
+	return !blacklisted
 }
 
 func (s *Manager) hashIsBlacklisted(hash share.DataHash) bool {

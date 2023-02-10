@@ -105,6 +105,7 @@ func (p *pool) remove(peers ...peer.ID) {
 	defer p.m.Unlock()
 
 	for _, peerID := range peers {
+		log.Debugw("removing peer", "peer", peerID.String())
 		if alive, ok := p.active[peerID]; ok && alive {
 			p.active[peerID] = false
 			p.activeCount--
