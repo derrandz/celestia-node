@@ -45,14 +45,21 @@ func ConstructModule(tp node.Type, cfg *Config, options ...fx.Option) fx.Option 
 			baseComponents,
 			fx.Invoke(share.EnsureEmptySquareExists),
 			// shrexsub broadcaster stub for daser
-			fxutil.ProvideAs(func(context.Context, share.DataHash) error {
-				return nil
-			}, new(shrexsub.BroadcastFn)),
+			fx.Provide(func() shrexsub.BroadcastFn {
+				return func(context.Context, share.DataHash) error {
+					return nil
+				}
+			}),
 			fxutil.ProvideAs(getters.NewIPLDGetter, new(share.Getter)),
 			fx.Provide(fx.Annotate(light.NewShareAvailability)),
 			// cacheAvailability's lifecycle continues to use a fx hook,
 			// since the LC requires a cacheAvailability but the constructor returns a share.Availability
 			fx.Provide(cacheAvailability[*light.ShareAvailability]),
+			fx.Provide(func() shrexsub.BroadcastFn {
+				return func(context.Context, share.DataHash) error {
+					return nil
+				}
+			}),
 		)
 	case node.Bridge, node.Full:
 		return fx.Module(
