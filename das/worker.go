@@ -112,6 +112,7 @@ func (w *worker) run(
 				log.Warn("failed to broadcast availability message",
 					"height", h.Height(), "hash", h.Hash(), "err", err)
 			}
+			log.Debugw("broadcasted to shrex-sub", "hash", h.DataHash.String())
 		}
 	}
 

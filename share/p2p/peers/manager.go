@@ -218,14 +218,17 @@ func (s *Manager) subscribeHeader(ctx context.Context, headerSub libhead.Subscri
 func (s *Manager) validate(ctx context.Context, peerID peer.ID, hash share.DataHash) pubsub.ValidationResult {
 	// messages broadcasted from self should bypass the validation with Accept
 	if peerID == s.host.ID() {
+		log.Debugw("received broadcasted datahash from self", "hash", hash.String())
 		return pubsub.ValidationAccept
 	}
 
 	// punish peer for sending invalid hash if it has misbehaved in the past
 	if s.hashIsBlacklisted(hash) || s.peerIsBlacklisted(peerID) {
+		log.Debugw("received bad hash", "hash", hash.String(), "from peer", peerID.String())
 		return pubsub.ValidationReject
 	}
 
+	log.Debugw("received new hash over shrex-sub", "hash", hash.String(), "from peer", peerID)
 	s.getOrCreatePool(hash.String()).add(peerID)
 	return pubsub.ValidationIgnore
 }
