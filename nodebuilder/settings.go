@@ -46,7 +46,7 @@ func WithMetrics(metricOpts []otlpmetrichttp.Option, nodeType node.Type) fx.Opti
 		fx.Invoke(fraudPkg.WithMetrics),
 		fx.Invoke(node.WithMetrics),
 		fx.Invoke(p2p.WithMetrics),
->>>>>>> blackbox-metrics
+	)
 
 	var opts fx.Option
 	switch nodeType {
