@@ -208,7 +208,7 @@ func (s *Manager) doneFunc(datahash share.DataHash, peerID peer.ID) DoneFunc {
 		log.Debugw("got peer from shrexSub pool",
 			"peer_id", peerID,
 			"datahash", datahash.String(),
-			result, result)
+			"result", result)
 		switch result {
 		case Success:
 			s.getOrCreatePool(datahash.String()).markSynced()
