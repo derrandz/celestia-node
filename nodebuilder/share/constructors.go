@@ -18,11 +18,7 @@ import (
 	disc "github.com/celestiaorg/celestia-node/share/availability/discovery"
 	"github.com/celestiaorg/celestia-node/share/eds"
 	"github.com/celestiaorg/celestia-node/share/getters"
-
-	logging "github.com/ipfs/go-log/v2"
 )
-
-var log = logging.Logger("nodebuilder/share")
 
 func discovery(cfg Config) func(routing.ContentRouting, host.Host) *disc.Discovery {
 	return func(
