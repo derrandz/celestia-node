@@ -3,6 +3,7 @@ package getters
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/celestiaorg/celestia-node/share"
 	"github.com/celestiaorg/celestia-node/share/p2p"
@@ -16,19 +17,23 @@ import (
 
 var _ share.Getter = (*ShrexGetter)(nil)
 
+const defaultMaxRequestDuration = time.Second * 10
+
 // ShrexGetter is a share.Getter that uses the shrex/eds and shrex/nd protocol to retrieve shares.
 type ShrexGetter struct {
 	edsClient *shrexeds.Client
 	ndClient  *shrexnd.Client
 
-	peerManager *peers.Manager
+	peerManager        *peers.Manager
+	maxRequestDuration time.Duration
 }
 
 func NewShrexGetter(edsClient *shrexeds.Client, ndClient *shrexnd.Client, peerManager *peers.Manager) *ShrexGetter {
 	return &ShrexGetter{
-		edsClient:   edsClient,
-		ndClient:    ndClient,
-		peerManager: peerManager,
+		edsClient:          edsClient,
+		ndClient:           ndClient,
+		peerManager:        peerManager,
+		maxRequestDuration: defaultMaxRequestDuration,
 	}
 }
 
@@ -46,23 +51,30 @@ func (sg *ShrexGetter) GetShare(ctx context.Context, root *share.Root, row, col 
 
 func (sg *ShrexGetter) GetEDS(ctx context.Context, root *share.Root) (*rsmt2d.ExtendedDataSquare, error) {
 	for {
-		to, setStatus, err := sg.peerManager.Peer(ctx, root.Hash())
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+		peer, setStatus, err := sg.peerManager.Peer(ctx, root.Hash())
 		if err != nil {
+			log.Debugw("couldn't find peer", "datahash", root.String(), "err", err)
 			return nil, err
 		}
 
-		eds, err := sg.edsClient.RequestEDS(ctx, root.Hash(), to)
+		reqCtx, cancel := context.WithTimeout(ctx, sg.maxRequestDuration)
+		eds, err := sg.edsClient.RequestEDS(reqCtx, root.Hash(), peer)
+		cancel()
 		switch err {
 		case nil:
-			setStatus(peers.ResultSuccess)
+			setStatus(peers.ResultSynced)
 			return eds, nil
+		case context.DeadlineExceeded:
+			log.Debugw("request exceeded deadline, trying with new peer", "datahash", root.String())
 		case p2p.ErrInvalidResponse:
-			setStatus(peers.ResultPeerMisbehaved)
-		case context.Canceled, context.DeadlineExceeded:
-			setStatus(peers.ResultFail)
-			return nil, ctx.Err()
+			setStatus(peers.ResultBlacklistPeer)
 		default:
-			setStatus(peers.ResultFail)
+			setStatus(peers.ResultCooldownPeer)
 		}
 	}
 }
@@ -73,23 +85,30 @@ func (sg *ShrexGetter) GetSharesByNamespace(
 	id namespace.ID,
 ) (share.NamespacedShares, error) {
 	for {
-		to, setStatus, err := sg.peerManager.Peer(ctx, root.Hash())
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+		peer, setStatus, err := sg.peerManager.Peer(ctx, root.Hash())
 		if err != nil {
+			log.Debugw("couldn't find peer", "datahash", root.String(), "err", err)
 			return nil, err
 		}
 
-		eds, err := sg.ndClient.RequestND(ctx, root, id, to)
+		reqCtx, cancel := context.WithTimeout(ctx, sg.maxRequestDuration)
+		nd, err := sg.ndClient.RequestND(reqCtx, root, id, peer)
+		cancel()
 		switch err {
 		case nil:
 			setStatus(peers.ResultSuccess)
-			return eds, nil
+			return nd, nil
+		case context.DeadlineExceeded:
+			log.Debugw("request exceeded deadline, trying with new peer", "datahash", root.String())
 		case p2p.ErrInvalidResponse:
-			setStatus(peers.ResultPeerMisbehaved)
-		case context.Canceled, context.DeadlineExceeded:
-			setStatus(peers.ResultFail)
-			return nil, ctx.Err()
+			setStatus(peers.ResultBlacklistPeer)
 		default:
-			setStatus(peers.ResultFail)
+			setStatus(peers.ResultCooldownPeer)
 		}
 	}
 }

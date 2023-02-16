@@ -82,7 +82,8 @@ func (w *worker) run(
 			break
 		}
 		w.setResult(curr, err)
-		metrics.observeSample(ctx, h, time.Since(startSample), err)
+
+		metrics.observeSample(ctx, h, time.Since(startSample), err, w.state.isRecentHeader)
 
 		if err != nil {
 			log.Debugw(
@@ -105,13 +106,14 @@ func (w *worker) run(
 			"finished (s)", time.Since(startSample),
 		)
 
-		// notify network about recent header being available to be synced via shrex.Getter
+		// notify network about availability of new block data (note: only full nodes can notify)
 		if w.state.isRecentHeader {
 			err = broadcast(ctx, h.DataHash.Bytes())
 			if err != nil {
 				log.Warn("failed to broadcast availability message",
 					"height", h.Height(), "hash", h.Hash(), "err", err)
 			}
+			log.Debugw("broadcasted to shrex-sub", "hash", h.DataHash.String())
 		}
 	}
 

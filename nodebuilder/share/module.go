@@ -15,6 +15,7 @@ import (
 	"github.com/celestiaorg/celestia-node/share/availability/light"
 	"github.com/celestiaorg/celestia-node/share/eds"
 	"github.com/celestiaorg/celestia-node/share/getters"
+	"github.com/celestiaorg/celestia-node/share/p2p/peers"
 	"github.com/celestiaorg/celestia-node/share/p2p/shrexeds"
 	"github.com/celestiaorg/celestia-node/share/p2p/shrexnd"
 	"github.com/celestiaorg/celestia-node/share/p2p/shrexsub"
@@ -45,9 +46,11 @@ func ConstructModule(tp node.Type, cfg *Config, options ...fx.Option) fx.Option 
 			baseComponents,
 			fx.Invoke(share.EnsureEmptySquareExists),
 			// shrexsub broadcaster stub for daser
-			fxutil.ProvideAs(func(context.Context, share.DataHash) error {
-				return nil
-			}, new(shrexsub.BroadcastFn)),
+			fx.Provide(func() shrexsub.BroadcastFn {
+				return func(context.Context, share.DataHash) error {
+					return nil
+				}
+			}),
 			fxutil.ProvideAs(getters.NewIPLDGetter, new(share.Getter)),
 			fx.Provide(fx.Annotate(light.NewShareAvailability)),
 			// cacheAvailability's lifecycle continues to use a fx hook,
@@ -62,7 +65,7 @@ func ConstructModule(tp node.Type, cfg *Config, options ...fx.Option) fx.Option 
 				return cfg
 			}),
 			fx.Provide(getters.NewIPLDGetter),
-			fx.Invoke(func(srv *shrexeds.Server) {}),
+			fx.Invoke(func(edsSrv *shrexeds.Server, ndSrc *shrexnd.Server) {}),
 			fx.Provide(fx.Annotate(
 				func(host host.Host, store *eds.Store, network modp2p.Network) (*shrexeds.Server, error) {
 					return shrexeds.NewServer(host, store, shrexeds.WithProtocolSuffix(string(network)))
@@ -145,7 +148,7 @@ func ConstructModule(tp node.Type, cfg *Config, options ...fx.Option) fx.Option 
 			fx.Provide(func(shrexSub *shrexsub.PubSub) shrexsub.BroadcastFn {
 				return shrexSub.Broadcast
 			}),
-			fx.Provide(peerManager),
+			fx.Provide(peers.NewManager),
 			fx.Provide(fullGetter),
 		)
 	default:

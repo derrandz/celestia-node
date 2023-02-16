@@ -3,27 +3,22 @@ package share
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/filecoin-project/dagstore"
 	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/routing"
 	routingdisc "github.com/libp2p/go-libp2p/p2p/discovery/routing"
-	"github.com/libp2p/go-libp2p/p2p/net/conngater"
 	"go.uber.org/fx"
 
-	"github.com/celestiaorg/celestia-node/header"
-	libhead "github.com/celestiaorg/celestia-node/libs/header"
-	modp2p "github.com/celestiaorg/celestia-node/nodebuilder/p2p"
+	"github.com/celestiaorg/celestia-app/pkg/da"
 	"github.com/celestiaorg/celestia-node/share"
 	"github.com/celestiaorg/celestia-node/share/availability/cache"
 	disc "github.com/celestiaorg/celestia-node/share/availability/discovery"
 	"github.com/celestiaorg/celestia-node/share/eds"
 	"github.com/celestiaorg/celestia-node/share/getters"
-	"github.com/celestiaorg/celestia-node/share/p2p/peers"
-	"github.com/celestiaorg/celestia-node/share/p2p/shrexsub"
 
-	"github.com/celestiaorg/celestia-app/pkg/da"
 	logging "github.com/ipfs/go-log/v2"
 )
 
@@ -69,54 +64,23 @@ func ensureEmptyCARExists(ctx context.Context, store *eds.Store) error {
 	return err
 }
 
-func peerManager(
-	headerSub libhead.Subscriber[*header.ExtendedHeader],
-	shrexSub *shrexsub.PubSub,
-	discovery *disc.Discovery,
-	host host.Host,
-	connGater *conngater.BasicConnectionGater,
-) *peers.Manager {
-	// TODO: find better syncTimeout duration?
-	return peers.NewManager(headerSub, shrexSub, discovery, host, connGater, modp2p.BlockTime)
-}
-
 func fullGetter(
 	store *eds.Store,
 	shrexGetter *getters.ShrexGetter,
 	ipldGetter *getters.IPLDGetter,
-	cfg *Config,
+	cfg Config,
 ) share.Getter {
-	gtrs := []share.Getter{
-		getters.NewStoreGetter(store),
+	var cascade []share.Getter
+	// based on the default value of das.SampleTimeout
+	timeout := time.Minute
+	cascade = append(cascade, getters.NewStoreGetter(store))
+	if cfg.UseShareExchange {
+		// if we are using share exchange, we split the timeout between the two getters
+		// once async cascadegetter is implemented, we can remove this
+		timeout /= 2
+		cascade = append(cascade, getters.NewTeeGetter(shrexGetter, store))
 	}
+	cascade = append(cascade, getters.NewTeeGetter(ipldGetter, store))
 
-	if cfg.NoCascade {
-		switch cfg.DefaultGetter {
-		case "shrex":
-			return getters.NewCascadeGetter(
-				append(gtrs, getters.NewTeeGetter(shrexGetter, store)),
-				modp2p.BlockTime,
-			)
-		case "ipld":
-			return getters.NewCascadeGetter(
-				append(gtrs, getters.NewTeeGetter(ipldGetter, store)),
-				modp2p.BlockTime,
-			)
-		default:
-			log.Warn("nodebuilder/constructors: ",
-				"NoCascade is set, but no DefaultGetter is provided. Defaulting to shrex/ipld.")
-			return getters.NewCascadeGetter(
-				append(gtrs, getters.NewTeeGetter(shrexGetter, store), getters.NewTeeGetter(ipldGetter, store)),
-				modp2p.BlockTime,
-			)
-		}
-	}
-
-	gtrs = append(gtrs, getters.NewTeeGetter(shrexGetter, store))
-
-	if cfg.UseIPLDFallback {
-		gtrs = append(gtrs, getters.NewTeeGetter(ipldGetter, store))
-	}
-
-	return getters.NewCascadeGetter(gtrs, modp2p.BlockTime)
+	return getters.NewCascadeGetter(cascade, timeout)
 }
