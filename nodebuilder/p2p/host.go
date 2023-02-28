@@ -16,6 +16,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/routing"
 	routedhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 	"github.com/libp2p/go-libp2p/p2p/net/conngater"
+	kcp "github.com/libp2p/go-libp2p/p2p/transport/kcp"
 	"go.uber.org/fx"
 
 	"github.com/celestiaorg/celestia-node/nodebuilder/node"
@@ -43,8 +44,11 @@ func host(params hostParams) (HostBase, error) {
 		libp2p.ResourceManager(params.ResourceManager),
 		// to clearly define what defaults we rely upon
 		libp2p.DefaultSecurity,
-		libp2p.DefaultTransports,
-		libp2p.DefaultMuxers,
+		// libp2p.DefaultTransports,
+		// libp2p.DefaultMuxers,
+		libp2p.ChainOptions(
+			libp2p.Transport(kcp.NewTransport),
+		),
 	}
 
 	// All node types except light (bridge, full) will enable NATService
