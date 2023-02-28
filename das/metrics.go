@@ -141,11 +141,13 @@ func (m *metrics) observeSample(
 	}
 	m.sampleTime.Record(ctx, sampleTime.Seconds(),
 		attribute.Bool("failed", err != nil),
+		attribute.Int("height", int(h.RawHeader.Height)),
 		attribute.Int("header_width", len(h.DAH.RowsRoots)),
 	)
 
 	m.sampled.Add(ctx, 1,
 		attribute.Bool("failed", err != nil),
+		attribute.Int("height", int(h.RawHeader.Height)),
 		attribute.Int("header_width", len(h.DAH.RowsRoots)),
 	)
 
