@@ -77,7 +77,7 @@ func initializeMetrics(
 	}
 
 	provider := metric.NewMeterProvider(
-		metric.WithReader(metric.NewPeriodicReader(exp, metric.WithTimeout(2*time.Second))),
+		metric.WithReader(metric.NewPeriodicReader(exp, metric.WithTimeout(15*time.Second))),
 		metric.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(fmt.Sprintf("Celestia-%s", nodeType.String())),
