@@ -12,6 +12,13 @@ import (
 
 const defaultRoutingRefreshPeriod = time.Minute
 
+type ProtocolsEnum string
+
+const (
+	PROTOCOL_DEFAULT ProtocolsEnum = "default"
+	PROTOCOL_KCP                   = "kcp"
+)
+
 // Config combines all configuration fields for P2P subsystem.
 type Config struct {
 	// ListenAddresses - Addresses to listen to on local NIC.
@@ -35,6 +42,8 @@ type Config struct {
 	// ConnManager is a configuration tuple for ConnectionManager.
 	ConnManager               connManagerConfig
 	RoutingTableRefreshPeriod time.Duration
+	// tcp+quic or kcp.
+	Protocol string
 }
 
 // DefaultConfig returns default configuration for P2P subsystem.
@@ -60,6 +69,7 @@ func DefaultConfig(tp node.Type) Config {
 		PeerExchange:              tp == node.Bridge || tp == node.Full,
 		ConnManager:               defaultConnManagerConfig(),
 		RoutingTableRefreshPeriod: defaultRoutingRefreshPeriod,
+		Protocol:                  string(PROTOCOL_DEFAULT),
 	}
 }
 

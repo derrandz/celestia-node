@@ -44,11 +44,20 @@ func host(params hostParams) (HostBase, error) {
 		libp2p.ResourceManager(params.ResourceManager),
 		// to clearly define what defaults we rely upon
 		libp2p.DefaultSecurity,
-		// libp2p.DefaultTransports,
-		// libp2p.DefaultMuxers,
-		libp2p.ChainOptions(
+	}
+	switch params.Protocol {
+	case PROTOCOL_DEFAULT:
+		opts = append(opts, libp2p.DefaultTransports, libp2p.DefaultMuxers)
+	case PROTOCOL_KCP:
+		opts = append(opts, libp2p.ChainOptions(
 			libp2p.Transport(kcp.NewTransport),
-		),
+		))
+	default:
+		log.Debug(
+			"unknown protocol", params.Protocol,
+			"falling back to default",
+		)
+		opts = append(opts, libp2p.DefaultTransports, libp2p.DefaultMuxers)
 	}
 
 	// All node types except light (bridge, full) will enable NATService
@@ -84,5 +93,6 @@ type hostParams struct {
 	Bandwidth       *metrics.BandwidthCounter
 	ResourceManager network.ResourceManager
 
-	Tp node.Type
+	Tp       node.Type
+	Protocol ProtocolsEnum
 }

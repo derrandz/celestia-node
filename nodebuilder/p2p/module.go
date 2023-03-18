@@ -30,6 +30,9 @@ func ConstructModule(tp node.Type, cfg *Config) fx.Option {
 		fx.Provide(peerStore),
 		fx.Provide(connectionManager),
 		fx.Provide(connectionGater),
+		fx.Provide(func() ProtocolsEnum {
+			return ProtocolsEnum(cfg.Protocol)
+		}),
 		fx.Provide(host),
 		fx.Provide(routedHost),
 		fx.Provide(pubSub),
