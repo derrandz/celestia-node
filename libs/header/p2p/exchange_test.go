@@ -13,12 +13,11 @@ import (
 	blankhost "github.com/libp2p/go-libp2p/p2p/host/blank"
 	"github.com/libp2p/go-libp2p/p2p/net/conngater"
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
+	swarm "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/celestiaorg/go-libp2p-messenger/serde"
-
-	swarm "github.com/libp2p/go-libp2p/p2p/net/swarm/testing"
 
 	"github.com/celestiaorg/celestia-node/libs/header"
 	headerMock "github.com/celestiaorg/celestia-node/libs/header/mocks"
@@ -79,7 +78,7 @@ func TestExchange_RequestVerifiedHeadersFails(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
 	t.Cleanup(cancel)
 	_, err := exchg.GetVerifiedRange(ctx, h, 3)
-	require.Error(t, err)
+	assert.Error(t, err)
 
 	// ensure that peer was added to the blacklist
 	peers := exchg.peerTracker.connGater.ListBlockedPeers()
@@ -92,8 +91,7 @@ func TestExchange_RequestVerifiedHeadersFails(t *testing.T) {
 func TestExchange_RequestFullRangeHeaders(t *testing.T) {
 	// create mocknet with 5 peers
 	hosts := createMocknet(t, 5)
-	totalAmount := 80
-	store := headerMock.NewStore[*test.DummyHeader](t, test.NewTestSuite(t), totalAmount)
+	store := headerMock.NewStore[*test.DummyHeader](t, test.NewTestSuite(t), int(header.MaxRangeRequestSize))
 	connGater, err := conngater.NewBasicConnectionGater(sync.MutexWrap(datastore.NewMapDatastore()))
 	require.NoError(t, err)
 	// create new exchange
@@ -102,7 +100,6 @@ func TestExchange_RequestFullRangeHeaders(t *testing.T) {
 		WithChainID(networkID),
 	)
 	require.NoError(t, err)
-	exchange.Params.MaxHeadersPerRequest = 10
 	exchange.ctx, exchange.cancel = context.WithCancel(context.Background())
 	t.Cleanup(exchange.cancel)
 	// amount of servers is len(hosts)-1 because one peer acts as a client
@@ -123,13 +120,13 @@ func TestExchange_RequestFullRangeHeaders(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	t.Cleanup(cancel)
 	// request headers from 1 to totalAmount(80)
-	headers, err := exchange.GetRangeByHeight(ctx, 1, uint64(totalAmount))
+	headers, err := exchange.GetRangeByHeight(ctx, 1, header.MaxRangeRequestSize)
 	require.NoError(t, err)
-	require.Len(t, headers, 80)
+	require.Len(t, headers, int(header.MaxRangeRequestSize))
 }
 
 // TestExchange_RequestHeadersLimitExceeded tests that the Exchange instance will return
-// header.ErrHeadersLimitExceeded if the requested range will be move than MaxRequestSize.
+// header.ErrHeadersLimitExceeded if the requested range will be move than MaxRangeRequestSize.
 func TestExchange_RequestHeadersLimitExceeded(t *testing.T) {
 	hosts := createMocknet(t, 2)
 	exchg, _ := createP2PExAndServer(t, hosts[0], hosts[1])
@@ -214,7 +211,6 @@ func TestExchange_RequestByHash(t *testing.T) {
 }
 
 func Test_bestHead(t *testing.T) {
-	params := DefaultClientParameters()
 	gen := func() []*test.DummyHeader {
 		suite := test.NewTestSuite(t)
 		res := make([]*test.DummyHeader, 0)
@@ -273,7 +269,7 @@ func Test_bestHead(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		res := tt.precondition()
-		header, err := bestHead(res, params.MinResponses)
+		header, err := bestHead(res)
 		require.NoError(t, err)
 		require.True(t, header.Height() == tt.expectedHeight)
 	}
@@ -322,7 +318,6 @@ func TestExchange_HandleHeaderWithDifferentChainID(t *testing.T) {
 	hosts := createMocknet(t, 2)
 	exchg, store := createP2PExAndServer(t, hosts[0], hosts[1])
 	exchg.Params.chainID = "test"
-	require.NoError(t, exchg.Start(context.TODO()))
 
 	_, err := exchg.Head(context.Background())
 	require.Error(t, err)
@@ -359,7 +354,7 @@ func TestExchange_RequestHeadersFromAnotherPeerWhenTimeout(t *testing.T) {
 
 	// create client + server(it does not have needed headers)
 	exchg, _ := createP2PExAndServer(t, host0, host1)
-	exchg.Params.RequestTimeout = time.Millisecond * 100
+	exchg.Params.RangeRequestTimeout = time.Millisecond * 100
 	// create one more server(with more headers in the store)
 	serverSideEx, err := NewExchangeServer[*test.DummyHeader](
 		host2, headerMock.NewStore[*test.DummyHeader](t, test.NewTestSuite(t), 10),
@@ -367,7 +362,7 @@ func TestExchange_RequestHeadersFromAnotherPeerWhenTimeout(t *testing.T) {
 	)
 	require.NoError(t, err)
 	// change store implementation
-	serverSideEx.store = &timedOutStore{timeout: exchg.Params.RequestTimeout}
+	serverSideEx.store = &timedOutStore{timeout: exchg.Params.RangeRequestTimeout}
 	require.NoError(t, serverSideEx.Start(context.Background()))
 	t.Cleanup(func() {
 		serverSideEx.Stop(context.Background()) //nolint:errcheck
@@ -380,6 +375,41 @@ func TestExchange_RequestHeadersFromAnotherPeerWhenTimeout(t *testing.T) {
 	require.NoError(t, err)
 	newPeerScore := exchg.peerTracker.trackedPeers[host1.ID()].score()
 	assert.NotEqual(t, newPeerScore, prevScore)
+}
+
+// TestExchange_RequestPartialRange enusres in case of receiving a partial response
+// from server, Exchange will re-request remaining headers from another peer
+func TestExchange_RequestPartialRange(t *testing.T) {
+	hosts := createMocknet(t, 3)
+	exchg, _ := createP2PExAndServer(t, hosts[0], hosts[1])
+
+	// create one more server(with more headers in the store)
+	serverSideEx, err := NewExchangeServer[*test.DummyHeader](
+		hosts[2], headerMock.NewStore[*test.DummyHeader](t, test.NewTestSuite(t), 10),
+		WithNetworkID[ServerParameters](networkID),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	t.Cleanup(cancel)
+
+	require.NoError(t, err)
+	require.NoError(t, serverSideEx.Start(ctx))
+	exchg.peerTracker.peerLk.Lock()
+	prevScoreBefore1 := exchg.peerTracker.trackedPeers[hosts[1].ID()].peerScore
+	prevScoreBefore2 := 50
+	// reducing peerScore of the second server, so our exchange will request host[1] first.
+	exchg.peerTracker.trackedPeers[hosts[2].ID()] = &peerStat{peerID: hosts[2].ID(), peerScore: 50}
+	exchg.peerTracker.peerLk.Unlock()
+	h, err := exchg.GetRangeByHeight(ctx, 1, 8)
+	require.NotNil(t, h)
+	require.NoError(t, err)
+
+	exchg.peerTracker.peerLk.Lock()
+	prevScoreAfter1 := exchg.peerTracker.trackedPeers[hosts[1].ID()].peerScore
+	prevScoreAfter2 := exchg.peerTracker.trackedPeers[hosts[2].ID()].peerScore
+	exchg.peerTracker.peerLk.Unlock()
+
+	assert.NotEqual(t, prevScoreBefore1, prevScoreAfter1)
+	assert.NotEqual(t, prevScoreBefore2, prevScoreAfter2)
 }
 
 func createMocknet(t *testing.T, amount int) []libhost.Host {
@@ -425,7 +455,7 @@ type timedOutStore struct {
 	timeout time.Duration
 }
 
-func (t *timedOutStore) GetRangeByHeight(_ context.Context, _, _ uint64) ([]*test.DummyHeader, error) {
+func (t *timedOutStore) HasAt(_ context.Context, _ uint64) bool {
 	time.Sleep(t.timeout + 1)
-	return []*test.DummyHeader{}, nil
+	return true
 }
